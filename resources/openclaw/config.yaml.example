@@ -1,0 +1,113 @@
+# OpenClaw 职场版 - 离线资源目录
+
+## 版本要求
+- **Node.js**: v24 (最好) / v22+ (支持)
+- **Python**: 3.12.9 (必需，用于OpenViking等记忆系统)
+- **OpenViking**: 0.3.3 (稳定版)
+- **Lossless-Claw**: 最新版
+- **Memory LanceDB Pro**: 最新版
+
+## 目录结构
+
+```
+resources/
+├── node-runtime/           # 内嵌Node.js运行时
+│   └── win-x64/          # Windows x64版本
+│       ├── node.exe       # Node.js v24
+│       └── *.dll          # Node.js依赖库
+├── python-runtime/        # 内嵌Python运行时
+│   └── win-x64/          # Windows x64版本
+│       ├── python.exe     # Python 3.12.9
+│       └── *.dll          # Python依赖库
+├── openclaw/             # OpenClaw核心 (Node.js)
+│   ├── main.js           # OpenClaw入口
+│   ├── config.yaml       # 配置文件
+│   └── package.json      # Node.js依赖
+├── openviking/          # OpenViking记忆系统 0.3.3 (Python)
+├── lossless-claw/       # Lossless Claw (Python)
+├── lancedb-pro/         # Memory LanceDB Pro (Python)
+└── skills/              # 预封装Skill包
+```
+
+## 运行时说明
+
+### Node.js 运行时
+- OpenClaw 核心基于 Node.js 运行
+- 建议打包 v24 版本以获得最佳性能
+- 安装包内置 Node.js 运行时，无需用户提前安装
+
+### Python 运行时
+- OpenViking 记忆系统基于 Python
+- Lossless-Claw + LanceDB Pro 也是 Python 版本
+- 必须使用 Python 3.12.9 版本
+- 安装包内置 Python 运行时
+
+## 安装要求
+
+### 硬件要求
+- CPU: 支持 AVX2 指令集（硬性要求）
+- 内存: ≥4GB (推荐 8GB+)
+- 磁盘: ≥10GB 可用空间 (SSD 推荐)
+
+### 软件要求
+- Windows 10/11 x64 (19045+)
+- 无需预先安装 Node.js 或 Python（内置）
+
+## 离线构建说明
+
+### Node.js 打包
+```bash
+# 下载 Node.js 24.x Windows x64
+curl -L https://nodejs.org/dist/v24.0.0/node-v24.0.0-win-x64.zip -o node.zip
+# 解压到 resources/node-runtime/win-x64/
+```
+
+### Python 打包
+```bash
+# 下载 Python 3.12.9 Windows x64 embeddable
+curl -L https://www.python.org/ftp/python/3.12.9/python-3.12.9-embed-amd64.zip -o python.zip
+# 解压到 resources/python-runtime/win-x64/
+```
+
+### Python 依赖打包
+```bash
+# 使用 pip download 预下载依赖
+pip download openviking==0.3.3
+pip download lossless-claw
+pip download lancedb
+pip download -r requirements.txt -d resources/python-packages/
+```
+
+## 依赖列表
+
+### Node.js 依赖 (package.json)
+```json
+{
+  "dependencies": {
+    "openclaw-standalone": "latest"
+  }
+}
+```
+
+### Python 依赖 (requirements.txt)
+```
+# 记忆系统
+openviking==0.3.3
+lossless-claw>=0.1.0
+lancedb>=0.1.0
+
+# Skills
+tavily-search>=0.1.0
+word-document-processor>=0.1.0
+excel-automation>=0.1.0
+ppt-visual>=0.1.0
+```
+
+## CI/CD 构建
+
+在 GitHub Actions 中构建时：
+1. 下载 Node.js 24.x embeddable 包
+2. 下载 Python 3.12.9 embeddable 包
+3. 预下载所有 Python 依赖
+4. 所有资源打包进安装程序
+5. 确保离线环境下也能正常安装
