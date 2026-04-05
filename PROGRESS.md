@@ -126,60 +126,97 @@
 - [x] `resources/skills/` - 预封装Skill包
 - [x] `resources/openclaw/config.yaml.example` - 配置模板
 
-### ⏳ 待完成
+#### 7. Git版本控制
+- [x] Git仓库初始化
+- [x] 提交初始代码框架 (commit: ac71def, 59 files, 8045 insertions)
 
-#### 7. 依赖安装与打包
-- [ ] npm install 安装前端依赖（本地已安装）
+---
+
+## ⏳ 待完成（明天继续）
+
+### 8. 远程仓库与云编译
+- [ ] 在GitHub创建远程仓库
+- [ ] 添加远程仓库地址
+- [ ] 推送代码到远程
+- [ ] 创建tag: `v0.8.0` 触发云编译
+- [ ] 下载验证构建产物(.exe)
+
+### 9. 离线资源打包
 - [ ] 下载 Node.js 24 embeddable 到 resources/
 - [ ] 下载 Python 3.12.9 embeddable 到 resources/
 - [ ] 预下载 Python 依赖包（pip download）
 
-#### 8. OpenClaw核心集成
+### 10. OpenClaw核心集成
 - [ ] 获取 openclaw-standalone 官方源码包
 - [ ] 适配 OpenClaw 入口文件和配置
 - [ ] 集成 OpenViking/Lossless-Claw/LanceDB
 
-#### 9. 构建与测试
-- [ ] 云编译构建 .exe（需GitHub Actions）
+### 11. 构建与测试
 - [ ] 安装包功能测试
 - [ ] OpenClaw实际运行测试
 - [ ] 健康度监控测试
 
-#### 10. 迭代优化
+### 12. 迭代优化
 - [ ] V0.9: 插件系统完整适配
 - [ ] V1.0: 一键修复功能完善
 - [ ] V1.1+: 持续同步上游更新
 
 ---
 
+## 当前Git状态
+
+```
+Branch: master
+Last Commit: ac71def
+  "OpenClaw职场版 V0.8 MVP - 初始代码框架"
+  59 files changed, 8045 insertions(+)
+
+Remote: 未配置（需要创建GitHub仓库）
+```
+
+---
+
+## 明日操作步骤
+
+### 步骤1: 创建GitHub仓库并推送
+```bash
+# 1. 在GitHub创建仓库: openclaw-workplace
+# 2. 添加远程仓库
+git remote add origin https://github.com/你的用户名/openclaw-workplace.git
+
+# 3. 推送代码
+git push -u origin master
+
+# 4. 创建tag触发云编译
+git tag v0.8.0
+git push origin v0.8.0
+
+# 5. 等待GitHub Actions构建完成
+# 6. 下载Release中的.exe安装包
+```
+
+### 步骤2: 下载离线资源（可并行）
+- Node.js 24: https://nodejs.org/dist/v24.0.0/node-v24.0.0-win-x64.zip
+- Python 3.12.9: https://www.python.org/ftp/python/3.12.9/python-3.12.9-embed-amd64.zip
+
+---
+
 ## 构建说明
 
-### 本地构建（需要高内存机器）
+### 本地构建（不推荐，内存不足）
 ```bash
-# 安装依赖
 npm install
-
-# 开发模式
-npm run tauri dev
-
-# 构建
 export PATH="$HOME/.cargo/bin:/c/ProgramData/mingw64/mingw64/bin:$PATH"
 npm run tauri build
 ```
 
 ### 云编译（GIT Actions - 推荐）
 ```bash
-# 推送代码
-git add .
-git commit -m "OpenClaw职场版 V0.8 MVP"
-git push
-
-# 创建tag触发构建
+git remote add origin https://github.com/你的用户名/openclaw-workplace.git
+git push -u origin master
 git tag v0.8.0
 git push origin v0.8.0
 ```
-
-构建产物会自动生成在 GitHub Releases。
 
 ---
 
@@ -238,3 +275,4 @@ resources/
 - 本地构建因内存不足失败（需要16GB+ RAM）
 - 建议使用GitHub Actions云编译
 - 代码框架已完成，等待实际OpenClaw包集成
+- Git已初始化并提交，等待推送到GitHub触发云编译
