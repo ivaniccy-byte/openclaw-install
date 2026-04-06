@@ -1,4 +1,4 @@
-use crate::{HealthDetails, HealthScore, ModelConfig, OpenClawStatus};
+use crate::{ModelConfig, OpenClawStatus};
 use reqwest::Client;
 use serde_json::json;
 use std::process::Command;
@@ -90,8 +90,9 @@ impl OpenClawProcess {
             let mut cpu_percent = 0.0f32;
 
             for process in sys.processes().values() {
-                if let Ok(cmd) = process.cmd().first().map(|p| p.to_string_lossy().to_string()) {
-                    if cmd.contains("node") && cmd.contains("openclaw") {
+                if let Some(cmd) = process.cmd().first() {
+                    let cmd_str = cmd.to_string_lossy().to_string();
+                    if cmd_str.contains("node") && cmd_str.contains("openclaw") {
                         memory_mb = process.memory() / (1024 * 1024);
                         cpu_percent = process.cpu_usage();
                         break;

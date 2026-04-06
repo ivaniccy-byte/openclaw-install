@@ -14,7 +14,7 @@ pub fn calculate_health_score(config: &AppConfig, status: &OpenClawStatus) -> Re
     let mut alerts: Vec<Alert> = Vec::new();
     let mut sys = System::new();
     sys.refresh_memory();
-    sys.refresh_cpu();
+    sys.refresh_cpu_all();
 
     // 核心进程状态 (权重30%)
     let process_alive = status.running;

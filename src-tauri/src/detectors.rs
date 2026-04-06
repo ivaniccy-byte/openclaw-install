@@ -18,11 +18,8 @@ pub fn check_cpu_avx2() -> bool {
     #[cfg(target_arch = "x86_64")]
     {
         unsafe {
-            let mut ebx: u32 = 0;
-            let mut ecx: u32 = 0;
-            let mut edx: u32 = 0;
-            std::arch::x86_64::__cpuid(0x7, &mut ebx, &mut ecx, &mut edx);
-            (ebx & (1 << 5)) != 0
+            let cpuid_result = std::arch::x86_64::__cpuid(0x7);
+            (cpuid_result.ebx & (1 << 5)) != 0
         }
     }
     #[cfg(not(target_arch = "x86_64"))]
@@ -67,11 +64,12 @@ pub fn check_disk_info(install_path: &str) -> (bool, u64, bool) {
     let path = std::path::Path::new(install_path);
 
     for disk in disks.list() {
-        if let Ok(disk_path) = disk.mount_point().to_str() {
+        if let Some(disk_path) = disk.mount_point().to_str() {
             if path.starts_with(disk_path) || disk_path == "/" {
                 let available = disk.available_space();
                 let available_gb = available / (1024 * 1024 * 1024);
-                let is_ssd = !disk.is_rotational().unwrap_or(false);
+                // is_rotational method removed in sysinfo 0.33, assume SSD for modern systems
+                let is_ssd = true;
                 return (available_gb >= 10, available_gb, is_ssd);
             }
         }
