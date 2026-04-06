@@ -26,10 +26,12 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Build frontend
+        run: npm run build
+
       - name: Download Node.js Runtime (v22+)
         run: |
           mkdir -p resources/node-runtime/win-x64
-          # Download Node.js 22.x LTS for OpenClaw 3.28 compatibility
           $nodeVersion = "22.12.0"
           $nodeUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
           Invoke-WebRequest -Uri $nodeUrl -OutFile "node.zip"
@@ -39,23 +41,12 @@ jobs:
       - name: Download OpenClaw and Memory System Packages
         run: |
           New-Item -ItemType Directory -Force -Path resources/openclaw, resources/lossless-claw, resources/lancedb-pro | Out-Null
-
-          # Note: Lossless-Claw and LanceDB Pro would be downloaded from official sources
-          # pip install lossless-claw lancedb  # For offline bundling reference
-
-          # Download OpenClaw 3.28 (actual package would come from official source)
-          Write-Host "OpenClaw 3.28 standalone package would be downloaded from official source"
+          Write-Host "Placeholder directories created"
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        run: npm run tauri build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: 'OpenClaw职场版 v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
   build-macos:
     runs-on: macos-14
@@ -83,13 +74,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Build frontend
+        run: npm run build
+
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: 'OpenClaw职场版 v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+        run: npm run tauri build
