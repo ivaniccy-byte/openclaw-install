@@ -1,6 +1,6 @@
 [package]
 name = "openclaw-workplace"
-version = "0.8.0"
+version = "0.8.2"
 description = "OpenClaw 职场一键版 - 永久免费、一键安装的OpenClaw整合包"
 authors = ["OpenClaw Workplace Team"]
 edition = "2021"
