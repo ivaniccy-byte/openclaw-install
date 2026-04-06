@@ -23,6 +23,14 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - name: Cache Tauri bundler tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/cache/index.crates.io-*/nsis-*
+            ~/.cargo/registry/cache/index.crates.io-*/wix-*
+          key: ${{ runner.os }}-tauri-bundler-${{ hashFiles('src-tauri/Cargo.lock') }}
+
       - name: Install frontend dependencies
         run: npm ci
 
