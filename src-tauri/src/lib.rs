@@ -28,8 +28,6 @@ pub struct EnvCheckResult {
     pub memory_gb: u64,
     pub nodejs_exists: bool,
     pub nodejs_version: Option<String>,
-    pub python_exists: bool,
-    pub python_version: Option<String>,
     pub port_available: bool,
     pub recommended_port: u16,
     pub network_ok: bool,
@@ -85,10 +83,10 @@ pub struct AppConfig {
     pub auto_start: bool,
     pub auto_restart: bool,
     pub low_power_mode: bool,
-    pub memory_system: String,
+    pub memory_system: String, // "none" 或 "loseless"
     pub main_model: Option<ModelConfig>,
-    pub embedding_model: Option<ModelConfig>,
-    pub rerank_model: Option<ModelConfig>,
+    pub embedding_model: Option<ModelConfig>, // Loseless Claw 需要 embedding 模型
+    pub rerank_model: Option<ModelConfig>, // Loseless Claw 需要 rerank 模型
 }
 
 /// 异常告警

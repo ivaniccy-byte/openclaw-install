@@ -13,17 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Python 3.12.9
-        run: |
-          $pythonVersion = "3.12.9"
-          $pythonUrl = "https://www.python.org/ftp/python/$pythonVersion/python-$pythonVersion-amd64.exe"
-          Invoke-WebRequest -Uri $pythonUrl -OutFile "python-installer.exe"
-          Start-Process -Wait -FilePath "python-installer.exe" -ArgumentList "/quiet", "InstallAllUsers=0", "PrependPath=1"
-          Remove-Item "python-installer.exe"
-
-      - name: Verify Python
-        run: python --version
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -37,37 +26,25 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Download Node.js Runtime (v24)
+      - name: Download Node.js Runtime (v22+)
         run: |
           mkdir -p resources/node-runtime/win-x64
-          # Download Node.js 24.x for offline embedding
-          $nodeVersion = "24.0.0"
+          # Download Node.js 22.x LTS for OpenClaw 3.28 compatibility
+          $nodeVersion = "22.12.0"
           $nodeUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
           Invoke-WebRequest -Uri $nodeUrl -OutFile "node.zip"
           Expand-Archive -Path "node.zip" -DestinationPath "resources/node-runtime/win-x64" -Force
           Remove-Item "node.zip"
 
-      - name: Download Python Runtime (3.12.9)
-        run: |
-          mkdir -p resources/python-runtime/win-x64
-          # Download Python 3.12.9 embeddable for offline embedding
-          $pythonVersion = "3.12.9"
-          $pythonUrl = "https://www.python.org/ftp/python/$pythonVersion/python-$pythonVersion-embed-amd64.zip"
-          Invoke-WebRequest -Uri $pythonUrl -OutFile "python-embed.zip"
-          Expand-Archive -Path "python-embed.zip" -DestinationPath "resources/python-runtime/win-x64" -Force
-          Remove-Item "python-embed.zip"
-
       - name: Download OpenClaw and Memory System Packages
         run: |
-          mkdir -p resources/openclaw resources/openviking resources/lossless-claw resources/lancedb-pro
+          mkdir -p resources/openclaw resources/lossless-claw resources/lancedb-pro
 
-          # Install Python packages for offline bundling
-          pip download openviking==0.3.3
-          pip download lossless-claw
-          pip download lancedb
+          # Note: Lossless-Claw and LanceDB Pro would be downloaded from official sources
+          # pip install lossless-claw lancedb  # For offline bundling reference
 
-          # Download OpenClaw (actual package would come from official source)
-          echo "OpenClaw standalone package would be downloaded from official source"
+          # Download OpenClaw 3.28 (actual package would come from official source)
+          echo "OpenClaw 3.28 standalone package would be downloaded from official source"
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -86,16 +63,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Python 3.12.9
+      - name: Install Node.js 22
         run: |
-          brew install python@3.12
-
-      - name: Verify Python
-        run: python3 --version
-
-      - name: Install Node.js 24
-        run: |
-          brew install node@24
+          brew install node@22
 
       - name: Verify Node
         run: node --version

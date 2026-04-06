@@ -16,8 +16,6 @@ interface EnvCheckResult {
   memory_gb: number
   nodejs_exists: boolean
   nodejs_version: string | null
-  python_exists: boolean
-  python_version: string | null
   port_available: boolean
   recommended_port: number
   network_ok: boolean
@@ -39,6 +37,12 @@ const selectedSkills = ref<string[]>([])
 const plugins = [
   { id: 'feishu', label: '飞书插件' },
   { id: 'wechat', label: '微信插件' },
+]
+
+// 记忆系统：只保留 none 和 loseless
+const memoryOptions = [
+  { id: 'none', label: '不启用（使用OpenClaw原生记忆）' },
+  { id: 'loseless', label: 'Loseless Claw + Memory LanceDB Pro（需配置Rerank模型）' },
 ]
 
 const skills = [
@@ -207,15 +211,9 @@ const startInstallSimulation = () => {
             </el-tag>
           </div>
           <div class="check-item">
-            <span>Node.js运行时 (最好v24)</span>
+            <span>Node.js运行时 (推荐v22+)</span>
             <el-tag :type="envCheck.nodejs_exists ? 'success' : 'info'">
               {{ envCheck.nodejs_exists ? `已安装 ${envCheck.nodejs_version}` : '将使用内置运行时' }}
-            </el-tag>
-          </div>
-          <div class="check-item">
-            <span>Python运行时 (需3.12.9)</span>
-            <el-tag :type="envCheck.python_exists ? 'success' : 'info'">
-              {{ envCheck.python_exists ? `已安装 ${envCheck.python_version}` : '将使用内置运行时' }}
             </el-tag>
           </div>
           <div class="check-item">
@@ -283,9 +281,7 @@ const startInstallSimulation = () => {
       <div class="option-section">
         <h4>记忆系统方案</h4>
         <el-radio-group v-model="selectedMemory">
-          <el-radio value="none">不启用（使用OpenClaw原生记忆）</el-radio>
-          <el-radio value="openviking">OpenViking 记忆系统（需配置Embedding模型）</el-radio>
-          <el-radio value="loseless">Loseless Claw + Memory LanceDB Pro（需配置Embedding+Rerank模型）</el-radio>
+          <el-radio v-for="m in memoryOptions" :key="m.id" :value="m.id">{{ m.label }}</el-radio>
         </el-radio-group>
       </div>
 

@@ -87,7 +87,7 @@ pub fn check_memory() -> (bool, u64) {
     (total_gb >= 4, total_gb)
 }
 
-/// Node.js 检测 (最好 v24)
+/// Node.js 检测 (OpenClaw 3.28 需要 Node.js)
 pub fn check_nodejs() -> (bool, Option<String>) {
     use std::process::Command;
 
@@ -96,8 +96,8 @@ pub fn check_nodejs() -> (bool, Option<String>) {
         if output.status.success() {
             let version = String::from_utf8_lossy(&output.stdout);
             let version = version.trim().to_string();
-            // 检查版本是否 >= 24
-            if version.starts_with("v24") || version.starts_with("v25") {
+            // OpenClaw 3.28 推荐 Node.js 20+
+            if version.starts_with("v20") || version.starts_with("v21") || version.starts_with("v22") || version.starts_with("v23") || version.starts_with("v24") {
                 return (true, Some(version));
             }
             // 较低版本也会检测到，但会提示建议使用内置版本
@@ -117,46 +117,6 @@ pub fn check_nodejs() -> (bool, Option<String>) {
                 if output.status.success() {
                     let version = String::from_utf8_lossy(&output.stdout);
                     return (true, Some(version.trim().to_string()));
-                }
-            }
-        }
-    }
-
-    (false, None)
-}
-
-/// Python 3.12.9 检测
-pub fn check_python() -> (bool, Option<String>) {
-    use std::process::Command;
-
-    // 检查PATH中的python
-    if let Ok(output) = Command::new("python").args(["--version"]).output() {
-        if output.status.success() {
-            let version = String::from_utf8_lossy(&output.stdout);
-            if version.contains("3.12") {
-                return (true, Some(version.trim().to_string()));
-            }
-            // 存在但版本不对
-            return (false, Some(version.trim().to_string()));
-        }
-    }
-
-    // 检查常见安装位置
-    let possible_paths = [
-        "C:\\Python312\\python.exe",
-        "C:\\Program Files\\Python312\\python.exe",
-        "C:\\Users\\ivan1\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
-    ];
-
-    for path in &possible_paths {
-        if std::path::Path::new(path).exists() {
-            if let Ok(output) = Command::new(path).args(["--version"]).output() {
-                if output.status.success() {
-                    let version = String::from_utf8_lossy(&output.stdout);
-                    if version.contains("3.12") {
-                        return (true, Some(version.trim().to_string()));
-                    }
-                    return (false, Some(version.trim().to_string()));
                 }
             }
         }
@@ -224,7 +184,6 @@ pub async fn check_all(install_path: &str) -> Result<EnvCheckResult, DetectorErr
     let (disk_ok, disk_space, is_ssd) = check_disk_info(install_path);
     let (memory_ok, memory_gb) = check_memory();
     let (nodejs_ok, nodejs_version) = check_nodejs();
-    let (python_ok, python_version) = check_python();
     let (port_available, recommended_port) = check_port_available(18789);
     let network_ok = check_network();
 
@@ -239,8 +198,6 @@ pub async fn check_all(install_path: &str) -> Result<EnvCheckResult, DetectorErr
         memory_gb,
         nodejs_exists: nodejs_ok,
         nodejs_version,
-        python_exists: python_ok,
-        python_version,
         port_available,
         recommended_port,
         network_ok,

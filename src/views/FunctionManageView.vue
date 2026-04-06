@@ -45,15 +45,9 @@ const memorySystems = ref([
     selected: true,
   },
   {
-    id: 'openviking',
-    name: 'OpenViking 记忆系统',
-    description: '需要配置Embedding模型，用于记忆向量生成与检索',
-    selected: false,
-  },
-  {
     id: 'loseless',
-    name: 'Loseless Claw + LanceDB Pro',
-    description: '需要配置Embedding+Rerank模型，长上下文精准召回',
+    name: 'Loseless Claw + Memory LanceDB Pro',
+    description: '需要配置Rerank模型，长上下文精准召回',
     selected: false,
   },
 ])

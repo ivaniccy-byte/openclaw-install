@@ -35,7 +35,7 @@ export const useConfigStore = defineStore('config', () => {
   const loading = ref(false)
 
   const showEmbeddingConfig = computed(() => {
-    return config.value.memory_system === 'openviking' || config.value.memory_system === 'loseless'
+    return config.value.memory_system === 'loseless'
   })
 
   const showRerankConfig = computed(() => {

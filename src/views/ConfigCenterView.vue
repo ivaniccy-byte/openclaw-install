@@ -62,7 +62,7 @@ const loading = ref(false)
 const testingModel = ref<string | null>(null)
 
 const showEmbeddingConfig = computed(() => {
-  return config.value.memory_system === 'openviking' || config.value.memory_system === 'loseless'
+  return config.value.memory_system === 'loseless'
 })
 
 const showRerankConfig = computed(() => {
@@ -239,13 +239,13 @@ loadConfig()
         <el-button v-else type="primary" plain @click="initMainModel">配置主模型</el-button>
       </div>
 
-      <el-divider />
+      <el-divider v-if="showEmbeddingConfig" />
 
       <!-- Embedding模型配置 -->
       <div class="model-section" v-if="showEmbeddingConfig">
         <div class="section-title">
           <span>Embedding模型配置</span>
-          <el-tag type="warning">记忆系统必填</el-tag>
+          <el-tag type="warning">Loseless记忆系统必填</el-tag>
         </div>
         <p class="section-desc">用于记忆向量的生成与检索</p>
 
@@ -267,7 +267,7 @@ loadConfig()
             <el-input v-model="config.embedding_model.endpoint" placeholder="API地址" />
           </el-form-item>
           <el-form-item label="模型名称">
-            <el-input v-model="config.embedding_model.model_name" placeholder="如:_embedding-v1" />
+            <el-input v-model="config.embedding_model.model_name" placeholder="如: _embedding-v1" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="testingModel === 'embedding'" @click="testConnection('embedding')">
@@ -287,7 +287,7 @@ loadConfig()
           <span>Rerank模型配置</span>
           <el-tag type="warning">Loseless记忆系统必填</el-tag>
         </div>
-        <p class="section-desc">用于长上下文记忆的精准召回、重排序优化</p>
+        <p class="section-desc">用于长上下文记忆的精准召回，重排序优化</p>
 
         <el-form label-width="120px" v-if="config.rerank_model">
           <el-form-item label="服务商">

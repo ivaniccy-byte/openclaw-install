@@ -1,6 +1,6 @@
 # OpenClaw 职场版 开发进度文档
 
-> 最后更新: 2026-04-05
+> 最后更新: 2026-04-06
 
 ## 项目概述
 
@@ -13,15 +13,12 @@
 - **安装包框架**: Tauri 2.0 (包体小、内存低、启动快)
 - **前端框架**: Vue 3 + Element Plus + TypeScript
 - **后端**: Rust (Tauri原生)
-- **OpenClaw核心**: Node.js 24 (最好) / 22+
-- **记忆系统Python环境**: 3.12.9
-  - OpenViking 0.3.3 (稳定版)
-  - Lossless-Claw + LanceDB Pro (最新版)
+- **OpenClaw核心**: Node.js 22+ LTS (OpenClaw 3.28 稳定版)
+- **记忆系统**: Loseless-Claw + LanceDB Pro (可选，需配置Rerank模型)
 
 ## 版本要求
 
-- Node.js: v24 (推荐) / v22+ (支持)
-- Python: 3.12.9 (必需，用于记忆系统)
+- Node.js: v22+ LTS (OpenClaw 3.28 兼容)
 - CPU: 支持 AVX2 指令集
 - 内存: ≥4GB (推荐 8GB+)
 - 磁盘空间: ≥10GB (SSD 推荐)
@@ -46,12 +43,10 @@
   - 磁盘空间/类型检测
   - 内存检测
   - Node.js检测
-  - Python 3.12.9检测
   - 端口可用性检测
   - 网络连通性检测
 - [x] `src-tauri/src/wrappers.rs` - OpenClaw进程管理
   - Node.js进程启动/停止
-  - Python运行时查找
   - 模型API连通性测试
   - 配置文件读写
 - [x] `src-tauri/src/telemetry.rs` - 健康度评分引擎
@@ -84,7 +79,7 @@
   - 快捷入口
 - [x] `src/views/ConfigCenterView.vue` - 配置中心
   - 大模型API配置（与记忆系统联动显示）
-  - 主模型/Embedding/Rerank分层配置
+  - 主模型/Rerank分层配置
   - 基础运行配置
   - 连通性测试
 - [x] `src/views/FunctionManageView.vue` - 功能管理
@@ -118,9 +113,7 @@
 
 #### 6. 离线资源目录结构
 - [x] `resources/node-runtime/win-x64/` - Node.js运行时
-- [x] `resources/python-runtime/win-x64/` - Python运行时
 - [x] `resources/openclaw/` - OpenClaw核心
-- [x] `resources/openviking/` - OpenViking 0.3.3
 - [x] `resources/lossless-claw/` - Lossless-Claw
 - [x] `resources/lancedb-pro/` - LanceDB Pro
 - [x] `resources/skills/` - 预封装Skill包
@@ -128,28 +121,27 @@
 
 #### 7. Git版本控制
 - [x] Git仓库初始化
-- [x] 提交初始代码框架 (commit: ac71def, 59 files, 8045 insertions)
+- [x] 提交初始代码框架
 
 ---
 
-## ⏳ 待完成（明天继续）
+## ⏳ 待完成
 
 ### 8. 远程仓库与云编译
-- [ ] 在GitHub创建远程仓库
-- [ ] 添加远程仓库地址
+- [x] 在GitHub创建远程仓库
+- [x] 添加远程仓库地址
 - [ ] 推送代码到远程
 - [ ] 创建tag: `v0.8.0` 触发云编译
 - [ ] 下载验证构建产物(.exe)
 
 ### 9. 离线资源打包
-- [ ] 下载 Node.js 24 embeddable 到 resources/
-- [ ] 下载 Python 3.12.9 embeddable 到 resources/
-- [ ] 预下载 Python 依赖包（pip download）
+- [ ] 下载 Node.js 22 LTS embeddable 到 resources/
+- [ ] 预下载 Lossless-Claw / LanceDB 依赖包
 
 ### 10. OpenClaw核心集成
-- [ ] 获取 openclaw-standalone 官方源码包
+- [ ] 获取 openclaw-standalone 3.28 官方源码包
 - [ ] 适配 OpenClaw 入口文件和配置
-- [ ] 集成 OpenViking/Lossless-Claw/LanceDB
+- [ ] 集成 Lossless-Claw / LanceDB
 
 ### 11. 构建与测试
 - [ ] 安装包功能测试
@@ -167,63 +159,22 @@
 
 ```
 Branch: master
-Last Commit: d91bf1e
-  "更新进度文档"
-  60 files changed, 8091 insertions(+)
-
-Remote: 未配置（需要创建GitHub仓库后添加）
+Remote: origin (https://github.com/ivaniccy-byte/openclaw-install.git)
 ```
-
----
-
-## 今日完成
-
-- [x] 进度文档更新 (d91bf1e)
-- [x] 代码框架提交完成，等待明天推送到GitHub
-
----
-
-## 明日操作步骤
-
-### 步骤1: 创建GitHub仓库并推送
-```bash
-# 1. 在GitHub创建仓库: openclaw-workplace
-# 2. 添加远程仓库
-git remote add origin https://github.com/你的用户名/openclaw-workplace.git
-
-# 3. 推送代码
-git push -u origin master
-
-# 4. 创建tag触发云编译
-git tag v0.8.0
-git push origin v0.8.0
-
-# 5. 等待GitHub Actions构建完成
-# 6. 下载Release中的.exe安装包
-```
-
-### 步骤2: 下载离线资源（可并行）
-- Node.js 24: https://nodejs.org/dist/v24.0.0/node-v24.0.0-win-x64.zip
-- Python 3.12.9: https://www.python.org/ftp/python/3.12.9/python-3.12.9-embed-amd64.zip
 
 ---
 
 ## 构建说明
 
-### 本地构建（不推荐，内存不足）
-```bash
-npm install
-export PATH="$HOME/.cargo/bin:/c/ProgramData/mingw64/mingw64/bin:$PATH"
-npm run tauri build
-```
-
 ### 云编译（GIT Actions - 推荐）
 ```bash
-git remote add origin https://github.com/你的用户名/openclaw-workplace.git
 git push -u origin master
 git tag v0.8.0
 git push origin v0.8.0
 ```
+
+### 下载离线资源
+- Node.js 22 LTS: https://nodejs.org/dist/v22.12.0/node-v22.12.0-win-x64.zip
 
 ---
 
@@ -267,9 +218,7 @@ src/
 
 resources/
 ├── node-runtime/win-x64/
-├── python-runtime/win-x64/
 ├── openclaw/
-├── openviking/
 ├── lossless-claw/
 ├── lancedb-pro/
 └── skills/
@@ -279,8 +228,8 @@ resources/
 
 ## 备注
 
-- 本地构建因内存不足失败（需要16GB+ RAM）
+- OpenClaw 版本锁定为 3.28（稳定版，新版本有BUG不推荐）
+- 移除 OpenViking 记忆系统（资源占用高，普通电脑带不动）
+- 移除 Python 3.12.9 依赖（因 OpenViking 移除）
+- 记忆系统仅保留 Loseless-Claw + LanceDB Pro
 - 建议使用GitHub Actions云编译
-- 代码框架已完成 (commit: d91bf1e)
-- 明天需推送到GitHub触发云编译
-- 离线资源（Node.js 24、Python 3.12.9）待下载

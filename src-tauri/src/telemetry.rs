@@ -55,13 +55,13 @@ pub fn calculate_health_score(config: &AppConfig, status: &OpenClawStatus) -> Re
     // 主模型状态 (权重20%)
     let main_model_ok = config.main_model.is_some();
 
-    // Embedding模型状态 (按记忆系统方案)
+    // Embedding模型状态 (Loseless Claw方案)
     let embedding_model_ok = match config.memory_system.as_str() {
-        "openviking" | "loseless" => config.embedding_model.is_some(),
+        "loseless" => config.embedding_model.is_some(),
         _ => true,
     };
 
-    // Rerank模型状态 (仅Loseless Claw方案)
+    // Rerank模型状态 (Loseless Claw方案)
     let rerank_model_ok = match config.memory_system.as_str() {
         "loseless" => config.rerank_model.is_some(),
         _ => true,
@@ -70,7 +70,7 @@ pub fn calculate_health_score(config: &AppConfig, status: &OpenClawStatus) -> Re
     // 记忆系统状态
     let memory_system_ok = match config.memory_system.as_str() {
         "none" => true,
-        "openviking" | "loseless" => config.embedding_model.is_some(),
+        "loseless" => config.embedding_model.is_some() && config.rerank_model.is_some(),
         _ => false,
     };
 
@@ -119,12 +119,12 @@ pub fn calculate_health_score(config: &AppConfig, status: &OpenClawStatus) -> Re
         });
     }
 
-    if !embedding_model_ok && (config.memory_system == "openviking" || config.memory_system == "loseless") {
+    if !embedding_model_ok && config.memory_system == "loseless" {
         score -= 15;
         alerts.push(Alert {
             id: "embedding_model".to_string(),
             title: "Embedding模型未配置".to_string(),
-            description: "记忆系统需要配置Embedding模型".to_string(),
+            description: "Loseless记忆系统需要配置Embedding模型".to_string(),
             severity: "WARNING".to_string(),
             fix_type: None,
         });

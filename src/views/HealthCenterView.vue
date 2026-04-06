@@ -174,12 +174,6 @@ onUnmounted(() => {
               </el-tag>
             </div>
             <div class="detail-item">
-              <span class="label">Embedding</span>
-              <el-tag :type="healthScore.details.embedding_model_ok ? 'success' : 'warning'" size="small">
-                {{ healthScore.details.embedding_model_ok ? '正常' : '未配置' }}
-              </el-tag>
-            </div>
-            <div class="detail-item">
               <span class="label">记忆系统</span>
               <el-tag :type="healthScore.details.memory_system_ok ? 'success' : 'warning'" size="small">
                 {{ healthScore.details.memory_system_ok ? '正常' : '异常' }}

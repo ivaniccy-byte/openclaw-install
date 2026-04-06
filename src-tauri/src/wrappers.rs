@@ -24,7 +24,6 @@ pub struct OpenClawProcess {
     install_path: String,
     port: u16,
     node_child: Option<std::process::Child>,
-    python_child: Option<std::process::Child>,  // Python记忆系统进程
     start_time: std::time::Instant,
 }
 
@@ -34,7 +33,6 @@ impl OpenClawProcess {
             install_path: install_path.to_string(),
             port,
             node_child: None,
-            python_child: None,
             start_time: std::time::Instant::now(),
         }
     }
@@ -61,11 +59,6 @@ impl OpenClawProcess {
         let node_child = node_cmd.spawn().map_err(|e| WrapperError::StartFailed(e.to_string()))?;
         self.node_child = Some(node_child);
 
-        // 3. 如果需要Python记忆系统，也启动Python进程
-        // （OpenViking/Lossless-Claw作为Python包运行）
-        // 注意：有些记忆系统可能是在Node.js进程中通过child_process调用的
-        // 这里预留接口，实际取决于各记忆系统的架构
-
         self.start_time = std::time::Instant::now();
 
         // 等待服务就绪
@@ -81,14 +74,6 @@ impl OpenClawProcess {
             child.wait().map_err(|e| WrapperError::StopFailed(e.to_string()))?;
         }
         self.node_child = None;
-
-        // 停止Python进程
-        if let Some(ref mut child) = self.python_child {
-            let _ = child.kill();
-            let _ = child.wait();
-        }
-        self.python_child = None;
-
         Ok(())
     }
 
@@ -169,50 +154,6 @@ impl OpenClawProcess {
         }
 
         Err(WrapperError::StartFailed("未找到Node.js运行时".to_string()))
-    }
-
-    /// 查找Python可执行文件（用于记忆系统）
-    pub fn find_python_exe(&self) -> Result<String, WrapperError> {
-        // 1. 先检查内置Python运行时
-        let built_in_python = std::path::Path::new(&self.install_path)
-            .join("resources")
-            .join("python-runtime")
-            .join("win-x64")
-            .join("python.exe");
-
-        if built_in_python.exists() {
-            return Ok(built_in_python.to_string_lossy().to_string());
-        }
-
-        // 2. 检查PATH中的python
-        if let Ok(output) = Command::new("python").arg("--version").output() {
-            if output.status.success() {
-                if let Ok(which) = Command::new("where").arg("python").output() {
-                    let path = String::from_utf8_lossy(&which.stdout);
-                    if let Some(first_line) = path.lines().next() {
-                        let python_path = first_line.trim();
-                        if std::path::Path::new(python_path).exists() {
-                            return Ok(python_path.to_string());
-                        }
-                    }
-                }
-            }
-        }
-
-        // 3. 检查常见安装位置
-        let possible_paths = [
-            "C:\\Python312\\python.exe",
-            "C:\\Program Files\\Python312\\python.exe",
-            "C:\\Users\\ivan1\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
-        ];
-
-        for path in &possible_paths {
-            if std::path::Path::new(path).exists() {
-                return Ok(path.to_string());
-            }
-        }
-
-        Err(WrapperError::StartFailed("未找到Python 3.12.9运行时".to_string()))
     }
 }
 
