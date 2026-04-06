@@ -38,13 +38,13 @@ jobs:
 
       - name: Download OpenClaw and Memory System Packages
         run: |
-          mkdir -p resources/openclaw resources/lossless-claw resources/lancedb-pro
+          New-Item -ItemType Directory -Force -Path resources/openclaw, resources/lossless-claw, resources/lancedb-pro | Out-Null
 
           # Note: Lossless-Claw and LanceDB Pro would be downloaded from official sources
           # pip install lossless-claw lancedb  # For offline bundling reference
 
           # Download OpenClaw 3.28 (actual package would come from official source)
-          echo "OpenClaw 3.28 standalone package would be downloaded from official source"
+          Write-Host "OpenClaw 3.28 standalone package would be downloaded from official source"
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
