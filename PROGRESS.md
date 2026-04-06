@@ -130,9 +130,10 @@
 ### 8. 远程仓库与云编译
 - [x] 在GitHub创建远程仓库
 - [x] 添加远程仓库地址
-- [ ] 推送代码到远程
-- [ ] 创建tag: `v0.8.0` 触发云编译
+- [x] 推送代码到远程
+- [x] 创建tag触发云编译 (v0.8.0, v0.8.1, v0.8.2, v0.8.3)
 - [ ] 下载验证构建产物(.exe)
+- [ ] 修复GitHub Actions构建错误
 
 ### 9. 离线资源打包
 - [ ] 下载 Node.js 22 LTS embeddable 到 resources/
@@ -160,7 +161,18 @@
 ```
 Branch: master
 Remote: origin (https://github.com/ivaniccy-byte/openclaw-install.git)
+Latest Tag: v0.8.3
+Latest Commit: 06aaf45 - chore: 同步版本号为v0.8.2
 ```
+
+## 构建历史
+
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| v0.8.3 | 2026-04-06 | 修复sysinfo 0.33 API兼容性 |
+| v0.8.2 | 2026-04-06 | 修复tauri.conf.json resources配置错误 |
+| v0.8.1 | 2026-04-06 | 修复workflow PowerShell语法 |
+| v0.8.0 | 2026-04-06 | 初始版本，删除OpenViking，锁定OpenClaw 3.28 |
 
 ---
 
