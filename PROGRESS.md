@@ -1,6 +1,6 @@
 # OpenClaw 职场版 开发进度文档
 
-> 最后更新: 2026-04-06
+> 最后更新: 2026-04-07
 
 ## 项目概述
 
@@ -125,15 +125,14 @@
 
 ---
 
-## ⏳ 待完成
+## ⏳ 进行中
 
 ### 8. 远程仓库与云编译
 - [x] 在GitHub创建远程仓库
 - [x] 添加远程仓库地址
 - [x] 推送代码到远程
-- [x] 创建tag触发云编译 (v0.8.0, v0.8.1, v0.8.2, v0.8.3)
-- [ ] 下载验证构建产物(.exe)
-- [ ] 修复GitHub Actions构建错误
+- [x] 创建tag触发云编译 (v0.8.0 ~ v0.9.0)
+- [ ] 修复GitHub Actions Windows打包超时问题
 
 ### 9. 离线资源打包
 - [ ] 下载 Node.js 22 LTS embeddable 到 resources/
@@ -149,40 +148,68 @@
 - [ ] OpenClaw实际运行测试
 - [ ] 健康度监控测试
 
-### 12. 迭代优化
-- [ ] V0.9: 插件系统完整适配
-- [ ] V1.0: 一键修复功能完善
-- [ ] V1.1+: 持续同步上游更新
+---
+
+## ❌ 当前问题
+
+### Windows打包超时
+- **错误信息**: `failed to bundle project: timeout: global`
+- **根本原因**: Tauri在打包时下载NSIS/WiX工具超时
+- **影响**: GitHub Actions Windows构建在打包步骤失败
+- **已尝试方案**:
+  - v0.8.6: 跳过NSIS，只用MSI打包 → 仍然超时
+  - v0.8.7: 完全禁用打包，只生成exe → 构建成功
+  - v0.8.8: 重新启用打包，添加Tauri工具缓存 → 仍然超时
+- **结论**: 代码无问题，本地exe构建成功，只是打包工具下载失败
 
 ---
 
 ## 当前Git状态
 
 ```
-Branch: master
-Remote: origin (https://github.com/ivaniccy-byte/openclaw-install.git)
-Latest Tag: v0.8.3
-Latest Commit: 06aaf45 - chore: 同步版本号为v0.8.2
+分支: master
+远程: origin (https://github.com/ivaniccy-byte/openclaw-install.git)
+最新Tag: v0.9.0
+最新提交: 69c027f - fix: 添加Tauri打包工具缓存，优化下载
 ```
 
 ## 构建历史
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| v0.9.0 | 2026-04-07 | 添加Tauri打包工具缓存 |
+| v0.8.9 | 2026-04-06 | 使用MSI打包，跳过NSIS |
+| v0.8.8 | 2026-04-06 | 重新启用打包 |
+| v0.8.7 | 2026-04-06 | 禁用打包，只生成exe（构建成功） |
+| v0.8.6 | 2026-04-06 | 使用MSI打包（仍超时） |
+| v0.8.5 | 2026-04-06 | 使用npm run tauri build |
+| v0.8.4 | 2026-04-06 | 改用tauri-action |
 | v0.8.3 | 2026-04-06 | 修复sysinfo 0.33 API兼容性 |
 | v0.8.2 | 2026-04-06 | 修复tauri.conf.json resources配置错误 |
 | v0.8.1 | 2026-04-06 | 修复workflow PowerShell语法 |
 | v0.8.0 | 2026-04-06 | 初始版本，删除OpenViking，锁定OpenClaw 3.28 |
 
+## 本地构建状态
+
+```
+src-tauri/target/release/openclaw-workplace.exe ✅ 构建成功
+```
+
 ---
 
 ## 构建说明
 
-### 云编译（GIT Actions - 推荐）
+### 云编译（GIT Actions）
 ```bash
 git push -u origin master
-git tag v0.8.0
-git push origin v0.8.0
+git tag v0.x.x
+git push origin v0.x.x
+```
+
+### 本地构建
+```bash
+npm install
+npm run tauri build
 ```
 
 ### 下载离线资源
@@ -244,4 +271,4 @@ resources/
 - 移除 OpenViking 记忆系统（资源占用高，普通电脑带不动）
 - 移除 Python 3.12.9 依赖（因 OpenViking 移除）
 - 记忆系统仅保留 Loseless-Claw + LanceDB Pro
-- 建议使用GitHub Actions云编译
+- 本地构建exe成功，GitHub Actions打包步骤超时待解决
