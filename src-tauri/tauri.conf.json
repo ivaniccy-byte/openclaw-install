@@ -45,9 +45,6 @@
     ],
     "windows": {
       "nsis": {
-        "installMode": "perUser",
-        "oneClick": true,
-        "allowElevation": false,
         "displayLanguageSelector": false
       },
       "wix": {

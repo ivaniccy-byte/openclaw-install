@@ -67,8 +67,8 @@ jobs:
           Expand-Archive -Path "openclaw.zip" -DestinationPath "resources/openclaw_tmp" -Force
           # Ensure target exists
           New-Item -ItemType Directory -Force -Path resources/openclaw | Out-Null
-          # Folder name in zip is usually openclaw-v2026.3.28
-          Copy-Item -Path "resources/openclaw_tmp/openclaw-v2026.3.28/*" -Destination "resources/openclaw" -Recurse -Force
+          # Folder name in zip is polymorphic (v-prefix or not), using wildcard
+          Copy-Item -Path "resources/openclaw_tmp/*/*" -Destination "resources/openclaw" -Recurse -Force
           Remove-Item -Path "resources/openclaw_tmp" -Recurse -Force
 
       - name: Download and Extract Memory Systems
@@ -95,18 +95,20 @@ jobs:
           # Move specific skills as per PRD
           $skillsToInclude = @("tavily-search", "multi-search-engine", "brainstorming", "workflows", "coding-agent", "word-document-processor", "excel-automation", "ppt-visual")
           foreach ($skill in $skillsToInclude) {
-              if (Test-Path "resources/skills_tmp/skills-main/$skill") {
-                  Copy-Item -Path "resources/skills_tmp/skills-main/$skill" -Destination "resources/skills" -Recurse -Force
+              if (Test-Path "resources/skills_tmp/*/$skill") {
+                  Copy-Item -Path "resources/skills_tmp/*/$skill" -Destination "resources/skills" -Recurse -Force
               }
           }
           
           # Download Humanizer (separate repo)
           Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
           Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
-          Copy-Item -Path "resources/humanizer_tmp/humanizer-main" -Destination "resources/skills/humanizer" -Recurse -Force
+          Copy-Item -Path "resources/humanizer_tmp/*/*" -Destination "resources/skills/humanizer" -Recurse -Force
           
           Remove-Item -Path "resources/skills_tmp", "resources/humanizer_tmp" -Recurse -Force
+          Remove-Item -Path "*.zip" -Force
           Write-Host "Full workplace resources prepared"
+
 
 
 
