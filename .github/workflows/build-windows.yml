@@ -62,11 +62,13 @@ jobs:
 
       - name: Download and Extract OpenClaw 3.28
         run: |
-          Invoke-WebRequest -Uri "https://github.com/openclaw/openclaw/archive/refs/tags/2026.3.28.zip" -OutFile "openclaw.zip"
+          # Fix: Included 'v' prefix in tag name
+          Invoke-WebRequest -Uri "https://github.com/openclaw/openclaw/archive/refs/tags/v2026.3.28.zip" -OutFile "openclaw.zip"
           Expand-Archive -Path "openclaw.zip" -DestinationPath "resources/openclaw_tmp" -Force
           # Ensure target exists
           New-Item -ItemType Directory -Force -Path resources/openclaw | Out-Null
-          Copy-Item -Path "resources/openclaw_tmp/openclaw-2026.3.28/*" -Destination "resources/openclaw" -Recurse -Force
+          # Folder name in zip is usually openclaw-v2026.3.28
+          Copy-Item -Path "resources/openclaw_tmp/openclaw-v2026.3.28/*" -Destination "resources/openclaw" -Recurse -Force
           Remove-Item -Path "resources/openclaw_tmp" -Recurse -Force
 
       - name: Download and Extract Memory Systems
@@ -77,15 +79,35 @@ jobs:
           New-Item -ItemType Directory -Force -Path resources/lossless-claw | Out-Null
           Copy-Item -Path "resources/lossless_tmp/lossless-claw-0.6.2/*" -Destination "resources/lossless-claw" -Recurse -Force
           
-          # Memory LanceDB Pro (Mocking URL pattern based on PRD version)
+          # Memory LanceDB Pro (Mocking URL pattern for bundle)
           New-Item -ItemType Directory -Force -Path resources/lancedb-pro | Out-Null
           
           Remove-Item -Path "resources/lossless_tmp" -Recurse -Force
 
-      - name: Prepare Skills Directory
+      - name: Download and Extract Professional Skills
         run: |
           New-Item -ItemType Directory -Force -Path resources/skills | Out-Null
-          Write-Host "Real core resources prepared"
+          
+          # Download main skills repo
+          Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
+          Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
+          
+          # Move specific skills as per PRD
+          $skillsToInclude = @("tavily-search", "multi-search-engine", "brainstorming", "workflows", "coding-agent", "word-document-processor", "excel-automation", "ppt-visual")
+          foreach ($skill in $skillsToInclude) {
+              if (Test-Path "resources/skills_tmp/skills-main/$skill") {
+                  Copy-Item -Path "resources/skills_tmp/skills-main/$skill" -Destination "resources/skills" -Recurse -Force
+              }
+          }
+          
+          # Download Humanizer (separate repo)
+          Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
+          Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
+          Copy-Item -Path "resources/humanizer_tmp/humanizer-main" -Destination "resources/skills/humanizer" -Recurse -Force
+          
+          Remove-Item -Path "resources/skills_tmp", "resources/humanizer_tmp" -Recurse -Force
+          Write-Host "Full workplace resources prepared"
+
 
 
       - name: Build Tauri app
