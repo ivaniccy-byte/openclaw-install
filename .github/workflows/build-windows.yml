@@ -86,28 +86,35 @@ jobs:
 
       - name: Download and Extract Professional Skills
         run: |
+          # 1. Prepare target directory
           New-Item -ItemType Directory -Force -Path resources/skills | Out-Null
           
-          # Download main skills repo
+          # 2. Download and Extract OpenClaw Skills
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
           Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
-          
-          # Move specific skills as per PRD
           $skillsToInclude = @("tavily-search", "multi-search-engine", "brainstorming", "workflows", "coding-agent", "word-document-processor", "excel-automation", "ppt-visual")
-          foreach ($skill in $skillsToInclude) {
-              if (Test-Path "resources/skills_tmp/*/$skill") {
-                  Copy-Item -Path "resources/skills_tmp/*/$skill" -Destination "resources/skills" -Recurse -Force
+          Get-ChildItem -Path "resources/skills_tmp/*" -Directory | ForEach-Object {
+              $root = $_.FullName
+              foreach ($skill in $skillsToInclude) {
+                  $skillPath = Join-Path $root $skill
+                  if (Test-Path $skillPath) {
+                      Copy-Item -Path "$skillPath" -Destination "resources/skills" -Recurse -Force
+                  }
               }
           }
           
-          # Download Humanizer (separate repo)
+          # 3. Download and Extract Humanizer
           Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
           Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
-          Copy-Item -Path "resources/humanizer_tmp/*/*" -Destination "resources/skills/humanizer" -Recurse -Force
+          Get-ChildItem -Path "resources/humanizer_tmp/*" -Directory | ForEach-Object {
+              Copy-Item -Path "$($_.FullName)" -Destination "resources/skills/humanizer" -Recurse -Force
+          }
           
-          Remove-Item -Path "resources/skills_tmp", "resources/humanizer_tmp" -Recurse -Force
-          Remove-Item -Path "*.zip" -Force
-          Write-Host "Full workplace resources prepared"
+          # 4. Cleanup
+          Remove-Item -Path "resources/skills_tmp", "resources/humanizer_tmp" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path "*.zip" -Force -ErrorAction SilentlyContinue
+          Write-Host "Workplace resources integrated successfully."
+
 
 
 
