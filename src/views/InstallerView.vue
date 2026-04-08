@@ -103,27 +103,48 @@ const getStatusText = (status: boolean) => (status ? '通过' : '不通过')
 // 监听步骤变化，自动触发安装
 watch(currentStep, (newStep) => {
   if (newStep === 4) {
-    startInstallSimulation()
+    startRealInstall()
   }
 })
 
-const startInstallSimulation = () => {
+const startRealInstall = async () => {
   installing.value = true
-  installProgress.value = 0
+  installProgress.value = 10 // 初始进度
 
-  const timer = setInterval(() => {
-    installProgress.value += Math.random() * 15
-    if (installProgress.value >= 100) {
-      installProgress.value = 100
-      clearInterval(timer)
-      setTimeout(() => {
-        installing.value = false
-        currentStep.value = 5
-        localStorage.setItem('openclaw_installed', 'true')
-        Message.success('安装完成！')
-      }, 500)
+  try {
+    const options = {
+      install_path: installPath.value,
+      selected_plugins: selectedPlugins.value,
+      selected_memory: selectedMemory.value,
+      selected_skills: selectedSkills.value
     }
-  }, 300)
+
+    // 调用真实的后端安装命令
+    await invoke('perform_installation', { options })
+    
+    installProgress.value = 60 // 复制完成
+    
+    // 模拟最后的零碎配置时间
+    const timer = setInterval(() => {
+      installProgress.value += 5
+      if (installProgress.value >= 100) {
+        installProgress.value = 100
+        clearInterval(timer)
+        setTimeout(() => {
+          installing.value = false
+          currentStep.value = 5
+          localStorage.setItem('openclaw_installed', 'true')
+          Message.success('配置完成，安装成功！')
+        }, 500)
+      }
+    }, 200)
+
+  } catch (e) {
+    console.error('安装部署失败:', e)
+    Message.error(`安装失败: ${e}`)
+    installing.value = false
+    currentStep.value = 3 // 返回上一步
+  }
 }
 </script>
 

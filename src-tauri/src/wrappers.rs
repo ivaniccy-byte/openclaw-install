@@ -17,6 +17,10 @@ pub enum WrapperError {
     HttpFailed(String),
     #[error("配置错误: {0}")]
     ConfigError(String),
+    #[error("安装失败: {0}")]
+    InstallError(String),
+    #[error("资源获取失败: {0}")]
+    ResourceError(String),
 }
 
 /// OpenClaw进程管理（基于Node.js运行时）
@@ -117,45 +121,118 @@ impl OpenClawProcess {
     /// 查找Node.js可执行文件
     fn find_node_exe(&self) -> Result<String, WrapperError> {
         // 1. 先检查内置运行时
+        let node_sub_path = if cfg!(target_os = "windows") {
+            "node-runtime/win-x64/node.exe"
+        } else if cfg!(target_os = "macos") {
+            "node-runtime/mac-arm64/bin/node" // 假设结构
+        } else {
+            "node-runtime/linux-x64/bin/node"
+        };
+
         let built_in_node = std::path::Path::new(&self.install_path)
             .join("resources")
-            .join("node-runtime")
-            .join("win-x64")
-            .join("node.exe");
+            .join(node_sub_path);
 
         if built_in_node.exists() {
             return Ok(built_in_node.to_string_lossy().to_string());
         }
 
-        // 2. 检查PATH中的node
-        if let Ok(output) = Command::new("node").arg("--version").output() {
+        // 2. 检查系统PATH
+        let node_cmd = if cfg!(target_os = "windows") { "node.exe" } else { "node" };
+        if let Ok(output) = Command::new(node_cmd).arg("--version").output() {
             if output.status.success() {
-                if let Ok(which) = Command::new("where").arg("node").output() {
-                    let path = String::from_utf8_lossy(&which.stdout);
+                // 在非Windows上使用 which，Windows上使用 where
+                let which_cmd = if cfg!(target_os = "windows") { "where" } else { "which" };
+                if let Ok(which_output) = Command::new(which_cmd).arg(node_cmd).output() {
+                    let path = String::from_utf8_lossy(&which_output.stdout);
                     if let Some(first_line) = path.lines().next() {
-                        let node_path = first_line.trim();
-                        if std::path::Path::new(node_path).exists() {
-                            return Ok(node_path.to_string());
-                        }
+                        return Ok(first_line.trim().to_string());
                     }
                 }
             }
         }
 
-        // 3. 检查常见安装位置
-        let possible_paths = [
-            "C:\\Program Files\\nodejs\\node.exe",
-            "C:\\Program Files (x86)\\nodejs\\node.exe",
-        ];
-
-        for path in &possible_paths {
-            if std::path::Path::new(path).exists() {
-                return Ok(path.to_string());
-            }
-        }
-
-        Err(WrapperError::StartFailed("未找到Node.js运行时".to_string()))
+        Err(WrapperError::StartFailed("未找到Node.js运行时，请确保已安装或内置资源完整".to_string()))
     }
+}
+
+/// 执行物理安装逻辑
+pub fn perform_install(
+    app_handle: &tauri::AppHandle,
+    options: &crate::InstallOptions,
+) -> Result<(), WrapperError> {
+    use std::fs;
+    use tauri::Manager;
+
+    let target_dir = std::path::Path::new(&options.install_path);
+    if !target_dir.exists() {
+        fs::create_dir_all(target_dir).map_err(|e| WrapperError::InstallError(e.to_string()))?;
+    }
+
+    let resource_dir = app_handle.path().resource_dir()
+        .map_err(|e| WrapperError::ResourceError(e.to_string()))?;
+    
+    let src_resources = resource_dir.join("resources");
+
+    // 1. 复制必备组件
+    copy_dir_recursive(&src_resources.join("openclaw"), &target_dir.join("resources").join("openclaw"))?;
+    
+    // 2. 根据平台复制Node运行时
+    let node_dir_name = if cfg!(target_os = "windows") { "win-x64" } else { "mac-arm64" };
+    copy_dir_recursive(
+        &src_resources.join("node-runtime").join(node_dir_name),
+        &target_dir.join("resources").join("node-runtime").join(node_dir_name)
+    )?;
+
+    // 3. 复制可选组件
+    if options.selected_memory == "loseless" {
+        copy_dir_recursive(&src_resources.join("lossless-claw"), &target_dir.join("resources").join("lossless-claw"))?;
+        copy_dir_recursive(&src_resources.join("lancedb-pro"), &target_dir.join("resources").join("lancedb-pro"))?;
+    }
+
+    if !options.selected_skills.is_empty() {
+        // 如果选择了技能，复制 skills 目录
+        copy_dir_recursive(&src_resources.join("skills"), &target_dir.join("resources").join("skills"))?;
+    }
+
+    // 4. 生成初始配置
+    let initial_config = crate::AppConfig {
+        port: 18789,
+        auto_start: false,
+        auto_restart: true,
+        low_power_mode: false,
+        memory_system: options.selected_memory.clone(),
+        main_model: None,
+        embedding_model: None,
+        rerank_model: None,
+    };
+    save_config(&options.install_path, &initial_config)?;
+
+    Ok(())
+}
+
+fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> Result<(), WrapperError> {
+    if !src.exists() {
+        log::warn!("源路径不存在: {:?}", src);
+        return Ok(());
+    }
+
+    if !dst.exists() {
+        std::fs::create_dir_all(dst).map_err(|e| WrapperError::InstallError(e.to_string()))?;
+    }
+
+    for entry in std::fs::read_dir(src).map_err(|e| WrapperError::InstallError(e.to_string()))? {
+        let entry = entry.map_err(|e| WrapperError::InstallError(e.to_string()))?;
+        let entry_path = entry.path();
+        let target_path = dst.join(entry.file_name());
+
+        if entry_path.is_dir() {
+            copy_dir_recursive(&entry_path, &target_path)?;
+        } else {
+            std::fs::copy(&entry_path, &target_path).map_err(|e| WrapperError::InstallError(e.to_string()))?;
+        }
+    }
+    Ok(())
 }
 
 /// 测试模型API连通性

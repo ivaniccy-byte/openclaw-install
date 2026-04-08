@@ -22,7 +22,12 @@ pub fn check_cpu_avx2() -> bool {
             (cpuid_result.ebx & (1 << 5)) != 0
         }
     }
-    #[cfg(not(target_arch = "x86_64"))]
+    #[cfg(target_arch = "aarch64")]
+    {
+        // Apple Silicon (ARM64) 不需要 AVX2，相关依赖通常有 ARM 原生支持
+        true
+    }
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
     {
         false
     }

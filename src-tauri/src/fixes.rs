@@ -8,41 +8,22 @@ pub enum FixError {
 }
 
 /// 执行一键修复
-pub fn execute_fix(fix_type: &str, _config: &AppConfig) -> Result<(), FixError> {
+pub fn execute_fix(fix_type: &str, config: &AppConfig) -> Result<(), FixError> {
     match fix_type {
         "restart" => {
-            // 进程重启修复
             log::info!("执行进程重启修复");
+            // 重启逻辑通常由前端调用 stop 再 start 组合实现
             Ok(())
         }
         "port" => {
-            // 端口更换修复
             log::info!("执行端口更换修复");
+            // 这里逻辑应当是找到新端口并保存到配置
+            // 由于该函数目前没法直接写回 state，实际上在 lib.rs 调用时可能需要包装
             Ok(())
         }
         "config" => {
-            // 配置还原修复
             log::info!("执行配置还原修复");
-            Ok(())
-        }
-        "network" => {
-            // 网络检测修复
-            log::info!("执行网络检测修复");
-            Ok(())
-        }
-        "low_memory" => {
-            // 低内存模式修复
-            log::info!("执行低内存模式修复");
-            Ok(())
-        }
-        "low_cpu" => {
-            // 低CPU模式修复
-            log::info!("执行低CPU模式修复");
-            Ok(())
-        }
-        "model_connection" => {
-            // 模型连通性修复
-            log::info!("执行模型连通性修复");
+            // 可以在此处实现默认配置写回逻辑
             Ok(())
         }
         _ => Err(FixError::Failed(format!("未知的修复类型: {}", fix_type))),

@@ -99,6 +99,15 @@ pub struct Alert {
     pub fix_type: Option<String>,
 }
 
+/// 安装选项
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstallOptions {
+    pub install_path: String,
+    pub selected_plugins: Vec<String>,
+    pub selected_memory: String,
+    pub selected_skills: Vec<String>,
+}
+
 // ============================================================================
 // 应用状态
 // ============================================================================
@@ -137,6 +146,24 @@ impl Default for AppState {
 async fn check_environment(install_path: String) -> Result<EnvCheckResult, String> {
     log::info!("开始环境预检测，安装路径: {}", install_path);
     detectors::check_all(&install_path).await.map_err(|e| e.to_string())
+}
+
+/// 执行安装
+#[tauri::command]
+async fn perform_installation(
+    app_handle: tauri::AppHandle,
+    state: State<'_, AppState>,
+    options: InstallOptions,
+) -> Result<(), String> {
+    log::info!("开始执行安装流程，路径: {}", options.install_path);
+    
+    // 执行物理安装逻辑
+    wrappers::perform_install(&app_handle, &options).map_err(|e| e.to_string())?;
+    
+    // 更新全局状态中的安装路径
+    *state.install_path.lock().unwrap() = Some(options.install_path);
+    
+    Ok(())
 }
 
 /// 启动OpenClaw
@@ -246,6 +273,7 @@ pub fn run() {
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             check_environment,
+            perform_installation,
             start_openclaw,
             stop_openclaw,
             get_openclaw_status,
