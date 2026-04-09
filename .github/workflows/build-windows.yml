@@ -69,7 +69,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path resources/openclaw | Out-Null
           # Folder name in zip is polymorphic (v-prefix or not), using wildcard
           Copy-Item -Path "resources/openclaw_tmp/*/*" -Destination "resources/openclaw" -Recurse -Force
-          Remove-Item -Path "resources/openclaw_tmp" -Recurse -Force
+          if (Test-Path "resources/openclaw_tmp") { cmd /c rmdir /s /q resources\openclaw_tmp }
 
       - name: Download and Extract Memory Systems
         run: |
@@ -82,7 +82,8 @@ jobs:
           # Memory LanceDB Pro (Mocking URL pattern for bundle)
           New-Item -ItemType Directory -Force -Path resources/lancedb-pro | Out-Null
           
-          Remove-Item -Path "resources/lossless_tmp" -Recurse -Force
+          if (Test-Path "resources/lossless_tmp") { cmd /c rmdir /s /q resources\lossless_tmp }
+
 
       - name: Download and Extract Professional Skills
         run: |
@@ -111,9 +112,11 @@ jobs:
           }
           
           # 4. Cleanup
-          Remove-Item -Path "resources/skills_tmp", "resources/humanizer_tmp" -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item -Path "*.zip" -Force -ErrorAction SilentlyContinue
+          if (Test-Path "resources/skills_tmp") { cmd /c rmdir /s /q resources\skills_tmp }
+          if (Test-Path "resources/humanizer_tmp") { cmd /c rmdir /s /q resources\humanizer_tmp }
+          Remove-Item -Path "openclaw.zip", "lossless-claw.zip", "skills.zip", "humanizer.zip" -ErrorAction SilentlyContinue
           Write-Host "Workplace resources integrated successfully."
+
 
 
 
