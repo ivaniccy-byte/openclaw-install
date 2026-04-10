@@ -185,8 +185,8 @@ pub fn perform_install(
     )?;
 
     // 3. 复制可选组件
-    if options.selected_memory == "loseless" {
-        copy_dir_recursive(&src_resources.join("lossless-claw"), &target_dir.join("resources").join("lossless-claw"))?;
+    if options.selected_memory == "lossless-enhanced" {
+        copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("resources").join("lossless-claw-enhanced"))?;
         copy_dir_recursive(&src_resources.join("lancedb-pro"), &target_dir.join("resources").join("lancedb-pro"))?;
     }
 

@@ -21,7 +21,7 @@ const faqs = ref([
   {
     title: '什么是记忆系统？如何选择？',
     content:
-      '记忆系统让OpenClaw能够记住您的使用习惯和对话历史。Loseless Claw+LanceDB方案需要Rerank模型，提供精准的长上下文记忆召回。如果您不需要高级记忆功能，可以选择「不启用」。',
+      '记忆系统让OpenClaw能够记住您的使用习惯和对话历史。Lossless Claw Enhanced+LanceDB方案需要Rerank模型，提供精准的长上下文记忆召回。如果您不需要高级记忆功能，可以选择「不启用」。',
   },
   {
     title: '低资源办公模式是什么？',

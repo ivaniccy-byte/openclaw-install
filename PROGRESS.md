@@ -15,7 +15,7 @@
 - **前端框架**: Vue 3 + Element Plus + TypeScript
 - **后端**: Rust (Tauri原生)
 - **OpenClaw核心**: Node.js 22+ LTS (OpenClaw 3.28 稳定版)
-- **记忆系统**: Loseless-Claw + LanceDB Pro
+- **记忆系统**: Lossless-Claw Enhanced + LanceDB Pro
 
 ## 版本要求
 

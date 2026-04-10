@@ -45,8 +45,8 @@ const memorySystems = ref([
     selected: true,
   },
   {
-    id: 'loseless',
-    name: 'Loseless Claw + Memory LanceDB Pro',
+    id: 'lossless-enhanced',
+    name: 'Lossless Claw Enhanced + Memory LanceDB Pro',
     description: '需要配置Rerank模型，长上下文精准召回',
     selected: false,
   },

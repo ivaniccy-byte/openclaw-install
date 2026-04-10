@@ -39,10 +39,10 @@ const plugins = [
   { id: 'wechat', label: '微信插件' },
 ]
 
-// 记忆系统：只保留 none 和 loseless
+// 记忆系统：只保留 none 和 lossless-enhanced
 const memoryOptions = [
   { id: 'none', label: '不启用（使用OpenClaw原生记忆）' },
-  { id: 'loseless', label: 'Loseless Claw + Memory LanceDB Pro（需配置Rerank模型）' },
+  { id: 'lossless-enhanced', label: 'Lossless Claw Enhanced + Memory LanceDB Pro（需配置Rerank模型）' },
 ]
 
 const skills = [

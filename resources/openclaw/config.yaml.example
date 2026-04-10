@@ -2,7 +2,7 @@
 
 ## 版本要求
 - **Node.js**: v22+ LTS (推荐) / v24 (最佳)
-- **Lossless-Claw**: 最新版
+- **Lossless-Claw Enhanced**: 最新版
 - **Memory LanceDB Pro**: 最新版
 
 ## 目录结构
@@ -17,7 +17,7 @@ resources/
 │   ├── main.js           # OpenClaw入口
 │   ├── config.yaml        # 配置文件
 │   └── package.json      # Node.js依赖
-├── lossless-claw/       # Lossless Claw
+├── lossless-claw-enhanced/ # Lossless Claw Enhanced
 ├── lancedb-pro/         # Memory LanceDB Pro
 └── skills/              # 预封装Skill包
 ```

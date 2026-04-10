@@ -62,11 +62,11 @@ const loading = ref(false)
 const testingModel = ref<string | null>(null)
 
 const showEmbeddingConfig = computed(() => {
-  return config.value.memory_system === 'loseless'
+  return config.value.memory_system === 'lossless-enhanced'
 })
 
 const showRerankConfig = computed(() => {
-  return config.value.memory_system === 'loseless'
+  return config.value.memory_system === 'lossless-enhanced'
 })
 
 watch(
@@ -245,7 +245,7 @@ loadConfig()
       <div class="model-section" v-if="showEmbeddingConfig">
         <div class="section-title">
           <span>Embedding模型配置</span>
-          <el-tag type="warning">Loseless记忆系统必填</el-tag>
+          <el-tag type="warning">Lossless Enhanced记忆系统必填</el-tag>
         </div>
         <p class="section-desc">用于记忆向量的生成与检索</p>
 
@@ -285,7 +285,7 @@ loadConfig()
       <div class="model-section" v-if="showRerankConfig">
         <div class="section-title">
           <span>Rerank模型配置</span>
-          <el-tag type="warning">Loseless记忆系统必填</el-tag>
+          <el-tag type="warning">Lossless Enhanced记忆系统必填</el-tag>
         </div>
         <p class="section-desc">用于长上下文记忆的精准召回，重排序优化</p>
 

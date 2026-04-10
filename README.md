@@ -10,7 +10,7 @@
 - **前端框架**: Vue 3 + Element Plus
 - **后端**: Rust (Tauri)
 - **OpenClaw核心**: Node.js 22+ (LTS, OpenClaw 3.28 稳定版)
-- **记忆系统**: Loseless-Claw + LanceDB Pro (可选，需配置Rerank模型)
+- **记忆系统**: Lossless-Claw Enhanced + LanceDB Pro (可选，需配置Rerank模型)
 
 ## 版本要求
 
@@ -24,7 +24,7 @@
 安装包包含所有运行时和依赖，无需网络即可安装：
 - Node.js 22+ LTS 运行时
 - OpenClaw 3.28 核心包
-- 记忆系统组件 (Loseless-Claw + LanceDB Pro，可选)
+- 记忆系统组件 (Lossless-Claw Enhanced + LanceDB Pro，可选)
 - 预封装职场Skill包
 
 ## 功能特点
@@ -34,7 +34,7 @@
 - 可视化配置中心 (与记忆系统联动)
 - 健康度监控与一键修复
 - 可选插件 (飞书/微信)
-- 可选记忆系统 (Loseless+LanceDB)
+- 可选记忆系统 (Lossless Enhanced+LanceDB)
 - 预封装职场Skill包
 - 全程中文界面
 
@@ -60,4 +60,4 @@ MIT License - 永久免费开源
 - OpenClaw 官方开源项目
 - openclaw-standalone 社区项目
 - OpenClaw-Launcher / OpenClaw-Sifu / ClawSquire
-- Lossless-Claw / LanceDB Pro
+- Lossless-Claw Enhanced / LanceDB Pro

@@ -35,11 +35,11 @@ export const useConfigStore = defineStore('config', () => {
   const loading = ref(false)
 
   const showEmbeddingConfig = computed(() => {
-    return config.value.memory_system === 'loseless'
+    return config.value.memory_system === 'lossless-enhanced'
   })
 
   const showRerankConfig = computed(() => {
-    return config.value.memory_system === 'loseless'
+    return config.value.memory_system === 'lossless-enhanced'
   })
 
   const loadConfig = async () => {

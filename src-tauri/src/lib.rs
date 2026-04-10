@@ -83,10 +83,10 @@ pub struct AppConfig {
     pub auto_start: bool,
     pub auto_restart: bool,
     pub low_power_mode: bool,
-    pub memory_system: String, // "none" 或 "loseless"
+    pub memory_system: String, // "none" 或 "lossless-enhanced"
     pub main_model: Option<ModelConfig>,
-    pub embedding_model: Option<ModelConfig>, // Loseless Claw 需要 embedding 模型
-    pub rerank_model: Option<ModelConfig>, // Loseless Claw 需要 rerank 模型
+    pub embedding_model: Option<ModelConfig>, // Lossless Claw Enhanced 需要 embedding 模型
+    pub rerank_model: Option<ModelConfig>, // Lossless Claw Enhanced 需要 rerank 模型
 }
 
 /// 异常告警
