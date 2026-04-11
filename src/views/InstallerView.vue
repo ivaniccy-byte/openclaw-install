@@ -45,7 +45,7 @@ const memoryOptions = [
   { id: 'lossless-enhanced', label: 'Lossless Claw Enhanced + Memory LanceDB Pro（短期记录和长期记忆）' },
 ]
 
-const skillsList = [
+const skills = [
   { id: 'tavily-search', label: 'Tavily Search' },
   { id: 'multi-search', label: '多引擎全网搜索' },
   { id: 'humanizer', label: '文字润色优化' },
@@ -61,20 +61,15 @@ const skillsList = [
 const checkAllSkills = ref(false)
 const isIndeterminate = ref(false)
 
-const handleCheckAllSkillsChange = (val: boolean) => {
-  selectedSkills.value = val ? skillsList.map(s => s.id) : []
+const handleCheckAllSkillsChange = (val: string | number | boolean) => {
+  selectedSkills.value = val ? skills.map(s => s.id) : []
   isIndeterminate.value = false
 }
 
-const handleSelectedSkillsChange = (value: string[]) => {
+const handleSelectedSkillsChange = (value: (string | number | boolean)[]) => {
   const checkedCount = value.length
-  checkAllSkills.value = checkedCount === skillsList.length
-  isIndeterminate.value = checkedCount > 0 && checkedCount < skillsList.length
-
-  // Tavily 提醒
-  if (value.includes('tavily-search') && !selectedSkills.value.includes('tavily-search')) {
-    // 逻辑处理：检查是否是刚勾选的
-  }
+  checkAllSkills.value = checkedCount === skills.length
+  isIndeterminate.value = checkedCount > 0 && checkedCount < skills.length
 }
 
 // 监听 selectedSkills 变化来处理弹窗
@@ -370,7 +365,7 @@ const startRealInstall = async () => {
           </el-checkbox>
         </div>
         <el-checkbox-group v-model="selectedSkills" @change="handleSelectedSkillsChange">
-          <el-checkbox v-for="s in skillsList" :key="s.id" :value="s.id">{{ s.label }}</el-checkbox>
+          <el-checkbox v-for="s in skills" :key="s.id" :value="s.id">{{ s.label }}</el-checkbox>
         </el-checkbox-group>
       </div>
 
