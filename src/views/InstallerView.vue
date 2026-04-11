@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import { ElCard, ElButton, ElProgress, ElAlert, ElCheckbox, ElRadio, ElRadioGroup, ElTag, ElMessage, ElMessageBox } from 'element-plus'
+import { homeDir, join } from '@tauri-apps/api/path'
+import { ElCard, ElButton, ElProgress, ElAlert, ElCheckbox, ElRadio, ElRadioGroup, ElTag, ElMessage, ElMessageBox, ElIcon } from 'element-plus'
+import { Search, Folder, Grid, Download, CircleCheck } from '@element-plus/icons-vue'
 
 const Message = ElMessage
 
@@ -22,7 +24,16 @@ interface EnvCheckResult {
 }
 
 const currentStep = ref(1)
-const installPath = ref('C:\\OpenClawWorkplace')
+const installPath = ref('')
+
+onMounted(async () => {
+  try {
+    const home = await homeDir();
+    installPath.value = await join(home, '.openclaw');
+  } catch (e) {
+    installPath.value = 'C:\\Users\\Default\\.openclaw';
+  }
+})
 const loading = ref(false)
 const installing = ref(false)
 const installProgress = ref(0)
@@ -46,15 +57,13 @@ const memoryOptions = [
 ]
 
 const skills = [
-  { id: 'tavily-search', label: 'Tavily Search' },
-  { id: 'multi-search', label: '多引擎全网搜索' },
-  { id: 'humanizer', label: '文字润色优化' },
-  { id: 'brainstorming', label: '创意头脑风暴' },
-  { id: 'word-processor', label: 'Word文档处理' },
-  { id: 'excel-automation', label: 'Excel自动化' },
-  { id: 'ppt-visual', label: 'PPT演示制作' },
+  { id: 'tavily-search', label: 'Tavily 全网深度搜索' },
+  { id: 'multi-search', label: '多引擎综合搜索' },
+  { id: 'humanizer', label: 'AI 文字润色 (Humanizer)' },
+  { id: 'word-document-processor', label: 'Word 文档智能处理' },
+  { id: 'excel-automation', label: 'Excel 数据自动化' },
+  { id: 'ppt-visual', label: 'PPT 演示文稿生成' },
   { id: 'coding-agent', label: '代码助手' },
-  { id: 'self-improving', label: '自我进化智能体' },
 ]
 
 // 全选逻辑
@@ -312,11 +321,15 @@ const startRealInstall = async () => {
         </span>
       </template>
 
-      <el-alert title="当前版本固定安装在系统盘(C盘)，以确保OpenClaw核心组件的绝对路径引用正确" type="warning" :closable="false" style="margin-bottom: 20px" />
+      <el-alert title="检测到 OpenClaw 标准默认路径。安装至此可确保所有官方 Skill 和配置文件无缝加载。" type="info" :closable="false" style="margin-bottom: 20px" />
       
       <div class="path-selector">
-        <el-input v-model="installPath" readonly style="margin-bottom: 12px" />
-        <p class="path-hint">V1.0 版本固定安装在 C:\OpenClawWorkplace，需要至少15GB可用空间（含运行缓存）</p>
+        <div class="path-input-group">
+          <el-input v-model="installPath" readonly class="locked-path">
+            <template #prepend>安装到:</template>
+          </el-input>
+        </div>
+        <p class="path-hint">基于 OpenClaw 3.28 规范，路径锁定在个人用户目录下的 .openclaw 文件夹。</p>
       </div>
 
       <div class="step-actions">
@@ -354,16 +367,17 @@ const startRealInstall = async () => {
 
       <!-- Skill包 -->
       <div class="option-section">
-        <h4>预封装职场Skill包</h4>
-        <el-checkbox
-          v-model="checkAllSkills"
-          :indeterminate="isIndeterminate"
-          @change="handleCheckAllSkillsChange"
-          style="margin-bottom: 8px"
-        >
-          全选
-        </el-checkbox>
-        <el-checkbox-group v-model="selectedSkills" @change="handleSelectedSkillsChange">
+        <div class="section-header">
+          <h4>预封装职场 Skill 包</h4>
+          <el-checkbox
+            v-model="checkAllSkills"
+            :indeterminate="isIndeterminate"
+            @change="handleCheckAllSkillsChange"
+          >
+            全选
+          </el-checkbox>
+        </div>
+        <el-checkbox-group v-model="selectedSkills" @change="handleSelectedSkillsChange" class="skill-grid">
           <el-checkbox v-for="s in skills" :key="s.id" :value="s.id">{{ s.label }}</el-checkbox>
         </el-checkbox-group>
       </div>
@@ -541,6 +555,22 @@ const startRealInstall = async () => {
 .option-section h4 {
   margin-bottom: 0;
   color: #303133;
+}
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  background: #f9fafc;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+}
+
+.locked-path :deep(.el-input__inner) {
+  background-color: #f5f7fa;
+  color: #606266;
+  font-weight: 600;
 }
 
 .install-progress {

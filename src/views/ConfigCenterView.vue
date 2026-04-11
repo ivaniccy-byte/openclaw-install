@@ -48,8 +48,11 @@ const config = ref<AppConfig>({
 })
 
 const providers = [
-  { value: 'volcengine', label: '火山引擎', url: 'https://ark.cn-beijing.volces.com/api/v3' },
-  { value: 'tencent', label: '腾讯云', url: 'https://api.larliga.cn/v1' },
+  { value: 'siliconflow', label: '硅基流动 (SiliconFlow)', url: 'https://api.siliconflow.cn/v1' },
+  { value: 'deepseek', label: '深度求索 (DeepSeek)', url: 'https://api.deepseek.com' },
+  { value: 'volcengine', label: '火山引擎 (豆包)', url: 'https://ark.cn-beijing.volces.com/api/v3' },
+  { value: 'tencent', label: '腾讯云 (混元)', url: 'https://api.larliga.cn/v1' },
+  { value: 'aliyun', label: '阿里百炼 (通义千问)', url: 'https://dashscope.aliyuncs.com/api/v1' },
   { value: 'aliyun', label: '阿里百炼', url: 'https://dashscope.aliyuncs.com/api/v1' },
   { value: 'baidu', label: '百度千帆', url: 'https://qianfan.baidubce.com/v2' },
   { value: 'glm', label: '智谱GLM', url: 'https://open.bigmodel.cn/api/paas/v4' },
@@ -57,6 +60,7 @@ const providers = [
   { value: 'minimax', label: 'MiniMax', url: 'https://api.minimax.chat/v1' },
   { value: 'custom', label: '自定义', url: '' },
 ]
+
 
 const loading = ref(false)
 const testingModel = ref<string | null>(null)

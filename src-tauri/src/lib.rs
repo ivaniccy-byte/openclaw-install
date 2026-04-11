@@ -160,6 +160,11 @@ async fn perform_installation(
     // 执行物理安装逻辑
     wrappers::perform_install(&app_handle, &options).map_err(|e| e.to_string())?;
     
+    // 立即从物理文件加载初始配置到内存状态
+    if let Ok(config) = wrappers::load_config(&options.install_path) {
+        *state.config.lock().unwrap() = config;
+    }
+
     // 更新全局状态中的安装路径
     *state.install_path.lock().unwrap() = Some(options.install_path);
     
@@ -224,13 +229,35 @@ async fn get_health_score(state: State<'_, AppState>) -> Result<HealthScore, Str
 /// 读取配置
 #[tauri::command]
 async fn get_config(state: State<'_, AppState>) -> Result<AppConfig, String> {
-    Ok(state.config.lock().unwrap().clone())
+    let mut current_config = state.config.lock().unwrap();
+    
+    // 尝试从物理路径加载最新配置
+    let path_opt = state.install_path.lock().unwrap().clone()
+        .or_else(|| std::env::var("OPENCLAW_HOME").ok());
+    
+    if let Some(path) = path_opt {
+        if let Ok(disk_config) = wrappers::load_config(&path) {
+            *current_config = disk_config;
+        }
+    }
+    
+    Ok(current_config.clone())
 }
 
 /// 保存配置
 #[tauri::command]
 async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<(), String> {
-    *state.config.lock().unwrap() = config;
+    // 1. 同步到内存
+    *state.config.lock().unwrap() = config.clone();
+    
+    // 2. 持久化到磁盘
+    let path_opt = state.install_path.lock().unwrap().clone()
+        .or_else(|| std::env::var("OPENCLAW_HOME").ok());
+        
+    if let Some(path) = path_opt {
+        wrappers::save_config(&path, &config).map_err(|e| e.to_string())?;
+    }
+    
     Ok(())
 }
 

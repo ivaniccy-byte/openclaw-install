@@ -39,117 +39,67 @@ jobs:
       - name: Download Node.js Runtime
         if: steps.cache-node-runtime.outputs.cache-hit != 'true'
         run: |
-          $nodeVersion = "22.12.0"
-          $nodeUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
-          Invoke-WebRequest -Uri $nodeUrl -OutFile "node-v22.12.0-win-x64.zip"
+          Invoke-WebRequest -Uri "https://nodejs.org/dist/v22.12.0/node-v22.12.0-win-x64.zip" -OutFile "node-v22.12.0-win-x64.zip"
 
       - name: Extract Node.js Runtime
         run: |
-          mkdir -p resources/node-runtime/win-x64
+          mkdir -p resources/node-runtime
           Expand-Archive -Path "node-v22.12.0-win-x64.zip" -DestinationPath "resources/node-runtime/tmp" -Force
-          Move-Item -Path "resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "resources/node-runtime/win-x64" -Force
+          Move-Item -Path "resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "resources/node-runtime" -Force
           Remove-Item -Path "resources/node-runtime/tmp" -Recurse -Force
 
-      - name: Cache Tauri bundler tools
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~\AppData\Local\tauri\NSIS
-            ~\AppData\Local\tauri\WixTools
-          key: ${{ runner.os }}-tauri-tools-${{ hashFiles('src-tauri/tauri.conf.json') }}
-          restore-keys: |
-            ${{ runner.os }}-tauri-tools-
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Download and Extract OpenClaw 3.28
+      - name: Download Python 3.10 Embeddable
         run: |
-          # Use the correct OpenClaw standalone URL for version 3.28
-          try {
-              Invoke-WebRequest -Uri "https://github.com/openclaw/openclaw-standalone/archive/refs/tags/v3.28.zip" -OutFile "openclaw.zip" -ErrorAction Stop
-              Expand-Archive -Path "openclaw.zip" -DestinationPath "resources/openclaw_tmp" -Force
-          } catch {
-              Write-Host "OpenClaw mock fallback: Network download failed or repo not public, creating mock core."
-              New-Item -ItemType Directory -Force -Path "resources/openclaw_tmp/openclaw-3.28" | Out-Null
-              Set-Content -Path "resources/openclaw_tmp/openclaw-3.28/start.js" -Value "console.log('OpenClaw v3.28 Mock Core Loaded');"
-          }
-          # Ensure target exists
-          New-Item -ItemType Directory -Force -Path resources/openclaw | Out-Null
-          
-          # Folder name in zip is polymorphic (v-prefix or not), using wildcard
-          Copy-Item -Path "resources/openclaw_tmp/*/*" -Destination "resources/openclaw" -Recurse -Force
-          if (Test-Path "resources/openclaw_tmp") { cmd /c rmdir /s /q resources\openclaw_tmp }
+          mkdir -p resources/python-runtime
+          Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip" -OutFile "python-embed.zip"
+          Expand-Archive -Path "python-embed.zip" -DestinationPath "resources/python-runtime" -Force
+          Remove-Item "python-embed.zip"
 
-      - name: Download and Extract Memory Systems
+      - name: Install Professional OpenClaw Core & Dependencies
         run: |
-          # Lossless Claw Enhanced
-          try {
-              Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless-claw.zip" -ErrorAction Stop
-              Expand-Archive -Path "lossless-claw.zip" -DestinationPath "resources/lossless_tmp" -Force
-          } catch {
-              Write-Host "Lossless Claw Enhanced mock fallback"
-              New-Item -ItemType Directory -Force -Path "resources/lossless_tmp/lossless-claw-enhanced-main" | Out-Null
-          }
-          New-Item -ItemType Directory -Force -Path resources/lossless-claw-enhanced | Out-Null
-          Copy-Item -Path "resources/lossless_tmp/*/*" -Destination "resources/lossless-claw-enhanced" -Recurse -Force
-          
-          # Memory LanceDB Pro (Mocking URL pattern for bundle)
-          New-Item -ItemType Directory -Force -Path resources/lancedb-pro | Out-Null
-          
-          if (Test-Path "resources/lossless_tmp") { cmd /c rmdir /s /q resources\lossless_tmp }
+          mkdir -p resources/openclaw
+          Push-Location resources/openclaw
+          npm init -y
+          npm install openclaw@3.28 --save
+          Set-Content -Path "start.js" -Value "require('./node_modules/openclaw/bin/openclaw.js');"
+          Pop-Location
 
-
-      - name: Download and Extract Professional Skills
+      - name: Download Professional Skills & Memory Systems
         run: |
-          # 1. Prepare target directory
-          New-Item -ItemType Directory -Force -Path resources/skills | Out-Null
+          mkdir -p resources/skills
+          mkdir -p resources/memories
           
-          # 2. Download and Extract OpenClaw Skills
-          try {
-              Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip" -ErrorAction Stop
-              Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
-          } catch {
-              Write-Host "Skills mock fallback: Network download failed or repo not public, generating mock skills."
-              New-Item -ItemType Directory -Force -Path "resources/skills_tmp/skills-main" | Out-Null
-          }
+          # OpenClaw Skills
+          Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
+          Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
           
-          $skillsToInclude = @("tavily-search", "multi-search-engine", "brainstorming", "workflows", "coding-agent", "word-document-processor", "excel-automation", "ppt-visual", "self-improving-agent")
-          
+          $skillsToInclude = @("tavily-search", "multi-search-engine", "word-document-processor", "excel-automation")
           Get-ChildItem -Path "resources/skills_tmp/*" -Directory | ForEach-Object {
               $root = $_.FullName
               foreach ($skill in $skillsToInclude) {
                   $skillPath = Join-Path $root $skill
-                  if (Test-Path $skillPath) {
-                      Copy-Item -Path "$skillPath" -Destination "resources/skills" -Recurse -Force
-                  }
+                  if (Test-Path $skillPath) { Copy-Item -Path "$skillPath" -Destination "resources/skills" -Recurse -Force }
               }
           }
           
-          # 2b. Mock missing skills to satisfy full-scale integration requirements
-          foreach ($skill in $skillsToInclude) {
-              $targetSkillDir = "resources/skills/$skill"
-              if (-not (Test-Path $targetSkillDir)) {
-                  New-Item -ItemType Directory -Force -Path $targetSkillDir | Out-Null
-                  Set-Content -Path "$targetSkillDir/main.py" -Value "# Mock integration for $skill`nprint('Loaded workplace skill: $skill')"
-              }
-          }
+          # Memory: Lossless Claw Enhanced
+          Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
+          Expand-Archive -Path "lossless.zip" -DestinationPath "resources/memories/lossless_tmp" -Force
+          Move-Item -Path "resources/memories/lossless_tmp/*/*" -Destination "resources/memories/lossless" -Force
+          Remove-Item "resources/memories/lossless_tmp" -Recurse -Force
           
-          # 3. Download and Extract Humanizer
+          # Skill: Humanizer
           Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
           Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
           Get-ChildItem -Path "resources/humanizer_tmp/*" -Directory | ForEach-Object {
               Copy-Item -Path "$($_.FullName)" -Destination "resources/skills/humanizer" -Recurse -Force
           }
-          
-          # 4. Cleanup
-          if (Test-Path "resources/skills_tmp") { cmd /c rmdir /s /q resources\skills_tmp }
-          if (Test-Path "resources/humanizer_tmp") { cmd /c rmdir /s /q resources\humanizer_tmp }
-          Remove-Item -Path "openclaw.zip", "lossless-claw.zip", "skills.zip", "humanizer.zip" -ErrorAction SilentlyContinue
-          Write-Host "Workplace resources integrated successfully."
+
+          # Cleanup
+          Remove-Item "resources/skills_tmp" -Recurse -Force
+          Remove-Item "resources/humanizer_tmp" -Recurse -Force
+          Remove-Item "skills.zip", "lossless.zip", "humanizer.zip" -ErrorAction SilentlyContinue
+
 
 
 

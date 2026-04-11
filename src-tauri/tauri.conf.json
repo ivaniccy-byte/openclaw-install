@@ -45,7 +45,9 @@
     ],
     "windows": {
       "nsis": {
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "installerHooks": "nsis/extra.nsh",
+        "installMode": "currentUser"
       },
       "wix": {
         "language": "zh-CN"
@@ -53,3 +55,5 @@
     }
   }
 }
+
+

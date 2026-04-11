@@ -120,13 +120,11 @@ impl OpenClawProcess {
 
     /// 查找Node.js可执行文件
     fn find_node_exe(&self) -> Result<String, WrapperError> {
-        // 1. 先检查内置运行时
+        // 1. 先检查内置运行时 (基于安装目录)
         let node_sub_path = if cfg!(target_os = "windows") {
-            "node-runtime/win-x64/node.exe"
-        } else if cfg!(target_os = "macos") {
-            "node-runtime/mac-arm64/bin/node" // 假设结构
+            "node-runtime/node.exe"
         } else {
-            "node-runtime/linux-x64/bin/node"
+            "node-runtime/bin/node"
         };
 
         let built_in_node = std::path::Path::new(&self.install_path)
@@ -136,18 +134,29 @@ impl OpenClawProcess {
             return Ok(built_in_node.to_string_lossy().to_string());
         }
 
-        // 2. 检查系统PATH
+        // 2. 检查全局环境变量 OPENCLAW_HOME
+        if let Ok(home) = std::env::var("OPENCLAW_HOME") {
+            let env_node = std::path::Path::new(&home).join(node_sub_path);
+            if env_node.exists() {
+                return Ok(env_node.to_string_lossy().to_string());
+            }
+        }
+
+        // 3. 特殊处理：检查用户家目录默认路径
+        if let Ok(home) = std::env::var("USERPROFILE") {
+            let user_node = std::path::Path::new(&home)
+                .join(".openclaw")
+                .join(node_sub_path);
+            if user_node.exists() {
+                return Ok(user_node.to_string_lossy().to_string());
+            }
+        }
+
+        // 4. 检查系统PATH
         let node_cmd = if cfg!(target_os = "windows") { "node.exe" } else { "node" };
         if let Ok(output) = Command::new(node_cmd).arg("--version").output() {
             if output.status.success() {
-                // 在非Windows上使用 which，Windows上使用 where
-                let which_cmd = if cfg!(target_os = "windows") { "where" } else { "which" };
-                if let Ok(which_output) = Command::new(which_cmd).arg(node_cmd).output() {
-                    let path = String::from_utf8_lossy(&which_output.stdout);
-                    if let Some(first_line) = path.lines().next() {
-                        return Ok(first_line.trim().to_string());
-                    }
-                }
+                return Ok(node_cmd.to_string());
             }
         }
 
@@ -183,25 +192,32 @@ pub fn perform_install(
     log::info!("OpenClaw源路径: {:?}, 存在: {}", openclaw_src, openclaw_src.exists());
     copy_dir_recursive(&openclaw_src, &target_dir.join("openclaw"))?;
     
-    // 2. 根据平台复制Node运行时
-    let node_dir_name = if cfg!(target_os = "windows") { "win-x64" } else { "mac-arm64" };
+    // 2. 复制Node运行时
     copy_dir_recursive(
-        &src_resources.join("node-runtime").join(node_dir_name),
-        &target_dir.join("node-runtime").join(node_dir_name)
+        &src_resources.join("node-runtime"),
+        &target_dir.join("node-runtime")
+    )?;
+
+    // 3. 复制Python运行时
+    copy_dir_recursive(
+        &src_resources.join("python-runtime"),
+        &target_dir.join("python-runtime")
     )?;
 
     // 3. 复制可选组件
     if options.selected_memory == "lossless-enhanced" {
         copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("lossless-claw-enhanced"))?;
-        copy_dir_recursive(&src_resources.join("lancedb-pro"), &target_dir.join("lancedb-pro"))?;
+        copy_dir_recursive(&src_resources.join("memories"), &target_dir.join("workspace").join("memories"))?;
     }
 
     if !options.selected_skills.is_empty() {
-        // 如果选择了技能，复制 skills 目录
-        copy_dir_recursive(&src_resources.join("skills"), &target_dir.join("skills"))?;
+        // 如果选择了技能，复制到 workspace/skills 目录 (OpenClaw v3.28 规范)
+        let dst_skills = target_dir.join("workspace").join("skills");
+        copy_dir_recursive(&src_resources.join("skills"), &dst_skills)?;
     }
 
-    // 4. 生成初始配置
+    // 4. 初始化配置文件 (JSON5 处理)
+    provision_initial_config(&target_dir, &options)?;
     let initial_config = crate::AppConfig {
         port: 18789,
         auto_start: false,
@@ -276,7 +292,6 @@ pub async fn test_model_api(model: &ModelConfig) -> Result<bool, WrapperError> {
 /// 加载OpenClaw配置
 pub fn load_config(install_path: &str) -> Result<crate::AppConfig, WrapperError> {
     let config_path = std::path::Path::new(install_path)
-        .join("resources")
         .join("openclaw")
         .join("config.yaml");
 
@@ -300,17 +315,73 @@ pub fn load_config(install_path: &str) -> Result<crate::AppConfig, WrapperError>
     }
 }
 
-/// 保存OpenClaw配置
-pub fn save_config(install_path: &str, config: &crate::AppConfig) -> Result<(), WrapperError> {
-    let config_dir = std::path::Path::new(install_path)
-        .join("resources")
-        .join("openclaw");
+/// 初始配置注入 (对齐 openclaw.json 规范)
+fn provision_initial_config(target_dir: &std::path::Path, options: &crate::InstallOptions) -> Result<(), WrapperError> {
+    let config_path = target_dir.join("openclaw.json"); // v3.28 默认主配置
+    
+    // 构造满足 OpenClaw 规范的插件和工作区配置
+    let mut plugins_entries = serde_json::Map::new();
+    
+    // 激活选定的插件
+    for plugin_id in &options.selected_plugins {
+        plugins_entries.insert(
+            plugin_id.clone(),
+            json!({
+                "enabled": true,
+                "config": {}
+            })
+        );
+    }
+    
+    let config_data = json!({
+        "agent": {
+            "workspace": "./workspace",
+            "home": target_dir.to_string_lossy().to_string()
+        },
+        "plugins": {
+            "entries": plugins_entries
+        },
+        "models": {
+            "chat": "deepseek-chat",
+            "quick": "gpt-4o-mini",
+            "cheap": "gpt-4o-mini"
+        },
+        "memory": {
+            "system": options.selected_memory
+        }
+    });
 
-    std::fs::create_dir_all(&config_dir)
+    let content = serde_json::to_string_pretty(&config_data)
         .map_err(|e| WrapperError::ConfigError(e.to_string()))?;
 
-    let config_path = config_dir.join("config.yaml");
-    let content = serde_yaml_ng::to_string(config)
+    std::fs::write(&config_path, content)
+        .map_err(|e| WrapperError::ConfigError(e.to_string()))?;
+
+    Ok(())
+}
+
+/// 保存配置 (同步到核心 openclaw.json)
+pub fn save_config(install_path: &str, config: &crate::AppConfig) -> Result<(), WrapperError> {
+    let home_path = std::path::Path::new(install_path);
+    let config_path = home_path.join("openclaw.json");
+
+    // 如果文件已存在，尝试合并而非覆盖（简单处理：使用标准JSON写回）
+    let mut config_data = if config_path.exists() {
+        let existing = std::fs::read_to_string(&config_path).unwrap_or_default();
+        serde_json::from_str::<serde_json::Value>(&existing).unwrap_or(json!({}))
+    } else {
+        json!({})
+    };
+
+    // 更新关键字段
+    if let Some(ref m) = config.main_model {
+        config_data["models"]["chat"] = json!(m.model_name);
+        // 这里可以扩展更多提供商同步
+    }
+    
+    config_data["port"] = json!(config.port);
+
+    let content = serde_json::to_string_pretty(&config_data)
         .map_err(|e| WrapperError::ConfigError(e.to_string()))?;
 
     std::fs::write(&config_path, content)
