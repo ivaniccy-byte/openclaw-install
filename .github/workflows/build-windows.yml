@@ -60,7 +60,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "resources/openclaw"
           Push-Location resources/openclaw
           npm init -y
-          npm install openclaw@3.28 --save
+          npm install openclaw@2026.3.28 --save
           Set-Content -Path "start.js" -Value "require('./node_modules/openclaw/bin/openclaw.js');"
           Pop-Location
 
