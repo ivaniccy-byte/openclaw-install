@@ -43,21 +43,21 @@ jobs:
 
       - name: Extract Node.js Runtime
         run: |
-          mkdir -p resources/node-runtime
+          New-Item -ItemType Directory -Force -Path "resources/node-runtime"
           Expand-Archive -Path "node-v22.12.0-win-x64.zip" -DestinationPath "resources/node-runtime/tmp" -Force
           Move-Item -Path "resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "resources/node-runtime" -Force
           Remove-Item -Path "resources/node-runtime/tmp" -Recurse -Force
 
       - name: Download Python 3.10 Embeddable
         run: |
-          mkdir -p resources/python-runtime
+          New-Item -ItemType Directory -Force -Path "resources/python-runtime"
           Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip" -OutFile "python-embed.zip"
           Expand-Archive -Path "python-embed.zip" -DestinationPath "resources/python-runtime" -Force
           Remove-Item "python-embed.zip"
 
       - name: Install Professional OpenClaw Core & Dependencies
         run: |
-          mkdir -p resources/openclaw
+          New-Item -ItemType Directory -Force -Path "resources/openclaw"
           Push-Location resources/openclaw
           npm init -y
           npm install openclaw@3.28 --save
@@ -66,8 +66,8 @@ jobs:
 
       - name: Download Professional Skills & Memory Systems
         run: |
-          mkdir -p resources/skills
-          mkdir -p resources/memories
+          New-Item -ItemType Directory -Force -Path "resources/skills"
+          New-Item -ItemType Directory -Force -Path "resources/memories"
           
           # OpenClaw Skills
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
