@@ -244,8 +244,10 @@ loadConfig()
       <!-- Embedding模型配置 -->
       <div class="model-section" v-if="showEmbeddingConfig">
         <div class="section-title">
-          <span>Embedding模型配置</span>
-          <el-tag type="warning">Lossless Enhanced记忆系统必填</el-tag>
+          <span>Embedding模型配置 <el-tag type="warning">Lossless Enhanced必填</el-tag></span>
+          <el-button size="small" @click="openProviderUrl(config.embedding_model?.provider || 'volcengine')">
+            一键申请API密钥
+          </el-button>
         </div>
         <p class="section-desc">用于记忆向量的生成与检索</p>
 
@@ -284,8 +286,10 @@ loadConfig()
       <!-- Rerank模型配置 -->
       <div class="model-section" v-if="showRerankConfig">
         <div class="section-title">
-          <span>Rerank模型配置</span>
-          <el-tag type="warning">Lossless Enhanced记忆系统必填</el-tag>
+          <span>Rerank模型配置 <el-tag type="warning">Lossless Enhanced必填</el-tag></span>
+          <el-button size="small" @click="openProviderUrl(config.rerank_model?.provider || 'volcengine')">
+            一键申请API密钥
+          </el-button>
         </div>
         <p class="section-desc">用于长上下文记忆的精准召回，重排序优化</p>
 
@@ -330,6 +334,12 @@ loadConfig()
       </template>
 
       <el-form label-width="140px">
+        <el-form-item label="记忆系统方案">
+          <el-radio-group v-model="config.memory_system" class="memory-radio-group">
+            <el-radio value="none">不启用 (原生记忆)</el-radio>
+            <el-radio value="lossless-enhanced">Lossless Enhanced + LanceDB</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="服务端口">
           <el-input-number v-model="config.port" :min="1024" :max="65535" />
           <span style="margin-left: 12px; color: #909399">默认18789</span>
@@ -395,5 +405,12 @@ loadConfig()
   display: flex;
   justify-content: center;
   padding: 24px 0;
+}
+
+.memory-radio-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 </style>

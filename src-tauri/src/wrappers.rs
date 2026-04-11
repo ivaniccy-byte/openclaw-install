@@ -248,8 +248,13 @@ pub async fn test_model_api(model: &ModelConfig) -> Result<bool, WrapperError> {
         "max_tokens": 10
     });
 
+    let mut url = model.endpoint.trim_end_matches('/').to_string();
+    if !url.contains("/chat/completions") && !url.contains("/embeddings") && !url.contains("/rerank") {
+        url.push_str("/chat/completions");
+    }
+
     let response = client
-        .post(&model.endpoint)
+        .post(&url)
         .header("Authorization", format!("Bearer {}", model.api_key))
         .header("Content-Type", "application/json")
         .json(&request)
@@ -257,7 +262,9 @@ pub async fn test_model_api(model: &ModelConfig) -> Result<bool, WrapperError> {
         .await
         .map_err(|e| WrapperError::HttpFailed(e.to_string()))?;
 
-    Ok(response.status().is_success())
+    let status = response.status();
+    // 只要不是 401(未授权), 403(禁止) 或 404(未找到)，就认为网络连通且端点正常
+    Ok(status.is_success() || status.as_u16() == 400 || status.as_u16() == 422)
 }
 
 /// 加载OpenClaw配置

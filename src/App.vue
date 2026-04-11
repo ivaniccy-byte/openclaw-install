@@ -16,7 +16,6 @@ const checkInstallStatus = async () => {
 const navItems = [
   { path: '/', name: '首页', icon: 'HomeFilled' },
   { path: '/config', name: '配置中心', icon: 'Setting' },
-  { path: '/functions', name: '功能管理', icon: 'Grid' },
   { path: '/health', name: '健康中心', icon: 'FirstAidKit' },
   { path: '/help', name: '帮助', icon: 'QuestionFilled' },
 ]
@@ -58,7 +57,7 @@ const goToInstaller = () => {
       </nav>
 
       <div class="sidebar-footer">
-        <div class="version-info">v0.8.0</div>
+        <div class="version-info">v0.9.3</div>
       </div>
     </aside>
 

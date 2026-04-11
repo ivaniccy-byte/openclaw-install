@@ -72,10 +72,10 @@ pub fn check_disk_info(install_path: &str) -> (bool, u64, bool) {
         if let Some(disk_path) = disk.mount_point().to_str() {
             if path.starts_with(disk_path) || disk_path == "/" {
                 let available = disk.available_space();
-                let available_gb = available / (1024 * 1024 * 1024);
+                let available_gb_float = available as f64 / (1024.0 * 1024.0 * 1024.0);
                 // is_rotational method removed in sysinfo 0.33, assume SSD for modern systems
                 let is_ssd = true;
-                return (available_gb >= 10, available_gb, is_ssd);
+                return (available_gb_float >= 9.5, available_gb_float.round() as u64, is_ssd);
             }
         }
     }
@@ -86,8 +86,11 @@ pub fn check_disk_info(install_path: &str) -> (bool, u64, bool) {
 pub fn check_memory() -> (bool, u64) {
     let mut sys = System::new();
     sys.refresh_memory();
-    let total_gb = sys.total_memory() / (1024 * 1024 * 1024);
-    (total_gb >= 4, total_gb)
+    let total_bytes = sys.total_memory();
+    let total_gb_float = total_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
+    // 许多4GB内存的电脑因为显存占用等原因，报告的数值会略小于4GB（如3.8GB）
+    // 我们将阈值下调至 3.5GB，以确保这些用户能正常安装
+    (total_gb_float >= 3.5, total_gb_float.round() as u64)
 }
 
 /// Node.js 检测 (OpenClaw 3.28 需要 Node.js)
