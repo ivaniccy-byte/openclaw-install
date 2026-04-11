@@ -45,7 +45,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "resources/node-runtime"
           Expand-Archive -Path "node-v22.12.0-win-x64.zip" -DestinationPath "resources/node-runtime/tmp" -Force
-          Move-Item -Path "resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "resources/node-runtime" -Force
+          Copy-Item -Path "resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "resources/node-runtime" -Recurse -Force
           Remove-Item -Path "resources/node-runtime/tmp" -Recurse -Force
 
       - name: Download Python 3.10 Embeddable
@@ -96,9 +96,9 @@ jobs:
           }
 
           # Cleanup
-          Remove-Item "resources/skills_tmp" -Recurse -Force
-          Remove-Item "resources/humanizer_tmp" -Recurse -Force
-          Remove-Item "skills.zip", "lossless.zip", "humanizer.zip" -ErrorAction SilentlyContinue
+          Remove-Item -Path "resources/skills_tmp" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path "resources/humanizer_tmp" -Recurse -Force -ErrorAction SilentlyContinue
+          @("skills.zip", "lossless.zip", "humanizer.zip") | ForEach-Object { if (Test-Path $_) { Remove-Item $_ -Force } }
 
 
 
