@@ -266,7 +266,7 @@ pub fn run() {
         .format_timestamp_millis()
         .init();
 
-    log::info!("OpenClaw职场版启动中...");
+    log::info!("OpenClaw 一键安装版启动中...");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())

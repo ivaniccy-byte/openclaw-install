@@ -4,7 +4,7 @@ import { ElCard, ElCollapse, ElCollapseItem, ElLink, ElTag } from 'element-plus'
 
 const faqs = ref([
   {
-    title: 'OpenClaw职场版支持哪些操作系统？',
+    title: 'OpenClaw一键安装版支持哪些操作系统？',
     content:
       '目前支持 Windows 10/11 x64 (推荐22H2及以上版本)，macOS 12+ (Intel/Apple Silicon) 正在适配中。',
   },
@@ -34,9 +34,9 @@ const faqs = ref([
       '安装版需要管理员权限安装到电脑，提供完整的开始菜单和桌面快捷方式；绿色单文件版无需安装，直接双击即可运行，适合公司电脑没有安装权限的用户。',
   },
   {
-    title: '如何卸载OpenClaw职场版？',
+    title: '如何卸载OpenClaw一键安装版？',
     content:
-      '如果是安装版，可以在Windows「设置」→「应用」中找到OpenClaw职场版进行卸载。卸载后会保留配置文件和数据目录，如需完全清除可手动删除安装目录。绿色单文件版直接删除文件即可。',
+      '如果是安装版，可以在Windows「设置」→「应用」中找到OpenClaw一键安装版进行卸载。卸载后会保留配置文件和数据目录，如需完全清除可手动删除安装目录。绿色单文件版直接删除文件即可。',
   },
   {
     title: '连接大模型API失败怎么办？',
@@ -146,7 +146,7 @@ const kernelVersion = 'openclaw-standalone latest'
       </template>
       <div class="copyright-content">
         <p>
-          <strong>OpenClaw职场版</strong> 基于
+          <strong>OpenClaw一键安装版</strong> 基于
           <el-link type="primary" href="https://github.com/openclaw/standalone" target="_blank">
             openclaw-standalone
           </el-link>
@@ -165,7 +165,7 @@ const kernelVersion = 'openclaw-standalone latest'
           。
         </p>
         <p style="margin-top: 12px">
-          本项目采用 MIT 开源协议，永久免费开源，无广告、无捆绑、不收集用户数据。
+          本项目采用 MIT 开源协议，OpenClaw 3.28原版开源，无广告、无捆绑、不收集用户数据。
         </p>
         <el-alert
           title="免责声明"

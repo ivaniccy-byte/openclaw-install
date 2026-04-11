@@ -151,8 +151,8 @@ const startRealInstall = async () => {
 <template>
   <div class="installer">
     <div class="installer-header">
-      <h1>OpenClaw 职场版 安装向导</h1>
-      <p>永久免费 · 零代码 · 一键安装</p>
+      <h1>OpenClaw 一键安装版 安装向导</h1>
+      <p>OpenClaw 3.28原版 · 零代码 · 一键安装</p>
     </div>
 
     <!-- 步骤指示器 -->
@@ -331,7 +331,7 @@ const startRealInstall = async () => {
 
       <div class="install-progress">
         <el-progress :percentage="Math.round(installProgress)" :stroke-width="20" />
-        <p>正在部署 OpenClaw 职场版，请稍候...</p>
+        <p>正在部署 OpenClaw 一键安装版，请稍候...</p>
       </div>
     </el-card>
 
@@ -348,8 +348,8 @@ const startRealInstall = async () => {
         <div class="success-icon">
           <el-icon :size="64" color="#67c23a"><CircleCheck /></el-icon>
         </div>
-        <h2>OpenClaw 职场版安装成功！</h2>
-        <p>感谢您选择 OpenClaw 职场版，祝您工作愉快</p>
+        <h2>OpenClaw 一键安装版安装成功！</h2>
+        <p>感谢您选择 OpenClaw 一键安装版，祝您工作愉快</p>
 
         <div class="complete-actions">
           <el-button type="primary" size="large" @click="finishInstall">立即启动</el-button>

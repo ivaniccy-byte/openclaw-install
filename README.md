@@ -1,8 +1,8 @@
-# OpenClaw 职场版
+# OpenClaw 一键安装版
 
 **当前版本: v0.9.3**
 
-永久免费、无捆绑、纯原版内核、全程零代码、一键安装的 OpenClaw 整合包，专为国内零技术基础普通上班族设计。
+OpenClaw 3.28原版、无捆绑、纯原版内核、全程零代码、一键安装的 OpenClaw 整合包，专为国内零技术基础普通上班族设计。
 
 ## 技术架构
 
@@ -53,7 +53,7 @@ npm run tauri build
 
 ## 开源协议
 
-MIT License - 永久免费开源
+MIT License - OpenClaw 3.28原版开源
 
 ## 致谢
 

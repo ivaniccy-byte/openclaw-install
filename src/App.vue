@@ -39,7 +39,7 @@ const goToInstaller = () => {
         </div>
         <div class="logo-text">
           <span class="title">OpenClaw</span>
-          <span class="subtitle">职场版</span>
+          <span class="subtitle">一键安装版</span>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ const goToInstaller = () => {
     <main class="main-content">
       <router-view v-if="isInstalled || route.path === '/installer'" />
       <div v-else class="not-installed">
-        <el-empty description="尚未安装 OpenClaw 职场版">
+        <el-empty description="尚未安装 OpenClaw 一键安装版">
           <el-button type="primary" @click="goToInstaller">前往安装</el-button>
         </el-empty>
       </div>
