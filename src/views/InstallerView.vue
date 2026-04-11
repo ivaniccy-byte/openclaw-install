@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import { ElCard, ElButton, ElProgress, ElAlert, ElCheckbox, ElRadio, ElRadioGroup, ElTag, ElMessage } from 'element-plus'
+import { ElCard, ElButton, ElProgress, ElAlert, ElCheckbox, ElRadio, ElRadioGroup, ElTag, ElMessage, ElMessageBox } from 'element-plus'
 
 const Message = ElMessage
 
@@ -22,7 +22,7 @@ interface EnvCheckResult {
 }
 
 const currentStep = ref(1)
-const installPath = ref('D:\\OpenClawWorkplace')
+const installPath = ref('C:\\OpenClawWorkplace')
 const loading = ref(false)
 const installing = ref(false)
 const installProgress = ref(0)
@@ -42,12 +42,11 @@ const plugins = [
 // 记忆系统：只保留 none 和 lossless-enhanced
 const memoryOptions = [
   { id: 'none', label: '不启用（使用OpenClaw原生记忆）' },
-  { id: 'lossless-enhanced', label: 'Lossless Claw Enhanced + Memory LanceDB Pro（需配置Rerank模型）' },
+  { id: 'lossless-enhanced', label: 'Lossless Claw Enhanced + Memory LanceDB Pro（短期记录和长期记忆）' },
 ]
 
-const skills = [
-  { id: 'all', label: '全量安装' },
-  { id: 'tavily-search', label: 'AI精准搜索' },
+const skillsList = [
+  { id: 'tavily-search', label: 'Tavily Search' },
   { id: 'multi-search', label: '多引擎全网搜索' },
   { id: 'humanizer', label: '文字润色优化' },
   { id: 'brainstorming', label: '创意头脑风暴' },
@@ -58,12 +57,57 @@ const skills = [
   { id: 'self-improving', label: '自我进化智能体' },
 ]
 
+// 全选逻辑
+const checkAllSkills = ref(false)
+const isIndeterminate = ref(false)
+
+const handleCheckAllSkillsChange = (val: boolean) => {
+  selectedSkills.value = val ? skillsList.map(s => s.id) : []
+  isIndeterminate.value = false
+}
+
+const handleSelectedSkillsChange = (value: string[]) => {
+  const checkedCount = value.length
+  checkAllSkills.value = checkedCount === skillsList.length
+  isIndeterminate.value = checkedCount > 0 && checkedCount < skillsList.length
+
+  // Tavily 提醒
+  if (value.includes('tavily-search') && !selectedSkills.value.includes('tavily-search')) {
+    // 逻辑处理：检查是否是刚勾选的
+  }
+}
+
+// 监听 selectedSkills 变化来处理弹窗
+watch(selectedSkills, (newVal, oldVal) => {
+  // 检查是否新增了 tavily-search
+  if (newVal.includes('tavily-search') && !oldVal.includes('tavily-search')) {
+    ElMessageBox.alert(
+      'Tavily Search 需要申请独立的 API KEY 后才能生效。在安装完成后的“配置中心”中，我们提供了一键申请链接。',
+      '功能说明',
+      { confirmButtonText: '我知道了', type: 'info' }
+    )
+  }
+})
+
+// 监听记忆系统变化
+watch(selectedMemory, (newVal) => {
+  if (newVal === 'lossless-enhanced') {
+    ElMessageBox.alert(
+      'Lossless-Claw Enhanced 方案需要配置多个模型（LLM、Embedding、Rerank）以实现最佳效果。在后续配置界面，我们将为你给出 SiliconFlow（硅基流动）等高性价比模型的推荐配置。',
+      '记忆系统说明',
+      { confirmButtonText: '我知道了', type: 'info' }
+    )
+  }
+})
+
 const canProceed = computed(() => {
   if (currentStep.value === 1) {
     if (!envCheck.value) return false
     if (!envCheck.value.cpu_avx2) return false
     if (!envCheck.value.disk_space_ok) return false
     if (!envCheck.value.memory_ok) return false
+    // 强制检查必须安装在C盘
+    if (!installPath.value.toUpperCase().startsWith('C:')) return false
     return true
   }
   return true
@@ -196,8 +240,15 @@ const startRealInstall = async () => {
         <el-alert
           v-else-if="!envCheck.disk_space_ok"
           title="磁盘空间不足"
-          description="安装路径所在磁盘可用空间小于10GB，请释放空间或更换安装路径。"
+          description="系统盘(C盘)可用空间小于15GB，无法保证OpenClaw稳定运行，请清理空间后再试。"
           type="error"
+          :closable="false"
+        />
+        <el-alert
+          v-else-if="!installPath.toUpperCase().startsWith('C:')"
+          title="安装盘符受限"
+          description="当前版本仅支持安装在系统盘(C盘)，请修改路径。"
+          type="warning"
           :closable="false"
         />
         <el-alert v-else title="环境检测通过" description="您的电脑满足安装要求，可以继续安装" type="success" :closable="false" />
@@ -214,7 +265,7 @@ const startRealInstall = async () => {
             </el-tag>
           </div>
           <div class="check-item">
-            <span>磁盘空间 (需≥10GB)</span>
+            <span>系统盘空间 (需≥15GB)</span>
             <el-tag :type="getStatusIcon(envCheck.disk_space_ok)">
               {{ envCheck.disk_space_gb }}GB {{ envCheck.disk_space_ok ? '通过' : '不足' }}
             </el-tag>
@@ -266,11 +317,11 @@ const startRealInstall = async () => {
         </span>
       </template>
 
-      <el-alert title="安装路径完全可自定义，无需安装到系统盘" type="info" :closable="false" style="margin-bottom: 20px" />
-
+      <el-alert title="当前版本仅支持安装在系统盘(C盘)，以确保OpenClaw核心组件的绝对路径引用正确" type="warning" :closable="false" style="margin-bottom: 20px" />
+      
       <div class="path-selector">
         <el-input v-model="installPath" placeholder="请输入安装路径" style="margin-bottom: 12px" />
-        <p class="path-hint">推荐安装到D盘、E盘等非系统盘，需要至少10GB可用空间</p>
+        <p class="path-hint">固定安装在C盘，建议保留默认路径。需要至少15GB可用空间（含运行缓存）</p>
       </div>
 
       <div class="step-actions">
@@ -308,9 +359,18 @@ const startRealInstall = async () => {
 
       <!-- Skill包 -->
       <div class="option-section">
-        <h4>预封装职场Skill包</h4>
-        <el-checkbox-group v-model="selectedSkills">
-          <el-checkbox v-for="s in skills" :key="s.id" :value="s.id">{{ s.label }}</el-checkbox>
+        <div class="section-header">
+          <h4>预封装职场Skill包</h4>
+          <el-checkbox
+            v-model="checkAllSkills"
+            :indeterminate="isIndeterminate"
+            @change="handleCheckAllSkillsChange"
+          >
+            全选
+          </el-checkbox>
+        </div>
+        <el-checkbox-group v-model="selectedSkills" @change="handleSelectedSkillsChange">
+          <el-checkbox v-for="s in skillsList" :key="s.id" :value="s.id">{{ s.label }}</el-checkbox>
         </el-checkbox-group>
       </div>
 
@@ -477,12 +537,15 @@ const startRealInstall = async () => {
   color: #909399;
 }
 
-.option-section {
-  margin-bottom: 24px;
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .option-section h4 {
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: #303133;
 }
 

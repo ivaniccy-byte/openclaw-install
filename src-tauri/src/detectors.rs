@@ -75,7 +75,7 @@ pub fn check_disk_info(install_path: &str) -> (bool, u64, bool) {
                 let available_gb_float = available as f64 / (1024.0 * 1024.0 * 1024.0);
                 // is_rotational method removed in sysinfo 0.33, assume SSD for modern systems
                 let is_ssd = true;
-                return (available_gb_float >= 9.5, available_gb_float.round() as u64, is_ssd);
+                return (available_gb_float >= 14.5, available_gb_float.round() as u64, is_ssd);
             }
         }
     }
