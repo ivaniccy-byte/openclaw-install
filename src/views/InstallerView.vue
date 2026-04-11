@@ -312,11 +312,11 @@ const startRealInstall = async () => {
         </span>
       </template>
 
-      <el-alert title="当前版本仅支持安装在系统盘(C盘)，以确保OpenClaw核心组件的绝对路径引用正确" type="warning" :closable="false" style="margin-bottom: 20px" />
+      <el-alert title="当前版本固定安装在系统盘(C盘)，以确保OpenClaw核心组件的绝对路径引用正确" type="warning" :closable="false" style="margin-bottom: 20px" />
       
       <div class="path-selector">
-        <el-input v-model="installPath" placeholder="请输入安装路径" style="margin-bottom: 12px" />
-        <p class="path-hint">固定安装在C盘，建议保留默认路径。需要至少15GB可用空间（含运行缓存）</p>
+        <el-input v-model="installPath" readonly style="margin-bottom: 12px" />
+        <p class="path-hint">V1.0 版本固定安装在 C:\OpenClawWorkplace，需要至少15GB可用空间（含运行缓存）</p>
       </div>
 
       <div class="step-actions">
@@ -354,16 +354,15 @@ const startRealInstall = async () => {
 
       <!-- Skill包 -->
       <div class="option-section">
-        <div class="section-header">
-          <h4>预封装职场Skill包</h4>
-          <el-checkbox
-            v-model="checkAllSkills"
-            :indeterminate="isIndeterminate"
-            @change="handleCheckAllSkillsChange"
-          >
-            全选
-          </el-checkbox>
-        </div>
+        <h4>预封装职场Skill包</h4>
+        <el-checkbox
+          v-model="checkAllSkills"
+          :indeterminate="isIndeterminate"
+          @change="handleCheckAllSkillsChange"
+          style="margin-bottom: 8px"
+        >
+          全选
+        </el-checkbox>
         <el-checkbox-group v-model="selectedSkills" @change="handleSelectedSkillsChange">
           <el-checkbox v-for="s in skills" :key="s.id" :value="s.id">{{ s.label }}</el-checkbox>
         </el-checkbox-group>

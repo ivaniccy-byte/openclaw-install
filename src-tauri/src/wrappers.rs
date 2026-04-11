@@ -130,7 +130,6 @@ impl OpenClawProcess {
         };
 
         let built_in_node = std::path::Path::new(&self.install_path)
-            .join("resources")
             .join(node_sub_path);
 
         if built_in_node.exists() {
@@ -172,27 +171,34 @@ pub fn perform_install(
     let resource_dir = app_handle.path().resource_dir()
         .map_err(|e| WrapperError::ResourceError(e.to_string()))?;
     
-    let src_resources = resource_dir.join("resources");
+    // tauri.conf.json 配置 "../resources/**/*" 会将 resources/ 下的内容
+    // 直接平铺到 resource_dir() 根目录下，所以不需要再 join("resources")
+    let src_resources = &resource_dir;
+
+    log::info!("资源目录: {:?}", src_resources);
+    log::info!("目标安装目录: {:?}", target_dir);
 
     // 1. 复制必备组件
-    copy_dir_recursive(&src_resources.join("openclaw"), &target_dir.join("resources").join("openclaw"))?;
+    let openclaw_src = src_resources.join("openclaw");
+    log::info!("OpenClaw源路径: {:?}, 存在: {}", openclaw_src, openclaw_src.exists());
+    copy_dir_recursive(&openclaw_src, &target_dir.join("openclaw"))?;
     
     // 2. 根据平台复制Node运行时
     let node_dir_name = if cfg!(target_os = "windows") { "win-x64" } else { "mac-arm64" };
     copy_dir_recursive(
         &src_resources.join("node-runtime").join(node_dir_name),
-        &target_dir.join("resources").join("node-runtime").join(node_dir_name)
+        &target_dir.join("node-runtime").join(node_dir_name)
     )?;
 
     // 3. 复制可选组件
     if options.selected_memory == "lossless-enhanced" {
-        copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("resources").join("lossless-claw-enhanced"))?;
-        copy_dir_recursive(&src_resources.join("lancedb-pro"), &target_dir.join("resources").join("lancedb-pro"))?;
+        copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("lossless-claw-enhanced"))?;
+        copy_dir_recursive(&src_resources.join("lancedb-pro"), &target_dir.join("lancedb-pro"))?;
     }
 
     if !options.selected_skills.is_empty() {
         // 如果选择了技能，复制 skills 目录
-        copy_dir_recursive(&src_resources.join("skills"), &target_dir.join("resources").join("skills"))?;
+        copy_dir_recursive(&src_resources.join("skills"), &target_dir.join("skills"))?;
     }
 
     // 4. 生成初始配置
