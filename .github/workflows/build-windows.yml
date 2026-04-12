@@ -71,22 +71,28 @@ jobs:
 
           Write-Host ">>> Downloading & Extracting OpenClaw Skills"
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
-          
-          # Ensure clean extraction
+
+          # Use .NET ZipFile instead of Expand-Archive to avoid .github directory bug
           if (Test-Path "resources/skills_tmp") {
-              Remove-Item "resources/skills_tmp" -Recurse -Force -ErrorAction SilentlyContinue
+              Remove-Item "resources/skills_tmp" -Recurse -Force -ErrorAction Stop
           }
-          New-Item -ItemType Directory -Force -Path "resources/skills_tmp"
-          Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
-          
+          New-Item -ItemType Directory -Force -Path "resources/skills_tmp" | Out-Null
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::ExtractToDirectory(
+              (Resolve-Path "skills.zip").Path,
+              (Resolve-Path "resources/skills_tmp").Path
+          )
+
           # Find the extracted root directory
           $skillsRoot = Get-ChildItem -Path "resources/skills_tmp" -Directory | Select-Object -First 1
           if (-not $skillsRoot) {
               Write-Error "Failed to find extracted skills directory"
+              Write-Error "Contents of skills_tmp:"
+              Get-ChildItem -Path "resources/skills_tmp" -Force | Format-List
               exit 1
           }
           Write-Host "Skills root: $($skillsRoot.FullName)"
-          
+
           $skillsToInclude = @("tavily-search", "multi-search-engine", "word-document-processor", "excel-automation")
           foreach ($skill in $skillsToInclude) {
               $src = Join-Path $skillsRoot.FullName $skill
@@ -100,7 +106,14 @@ jobs:
 
           Write-Host ">>> Downloading & Extracting Lossless Memory"
           Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
-          Expand-Archive -Path "lossless.zip" -DestinationPath "resources/memories/lossless_tmp" -Force
+          if (Test-Path "resources/memories/lossless_tmp") {
+              Remove-Item "resources/memories/lossless_tmp" -Recurse -Force -ErrorAction Stop
+          }
+          New-Item -ItemType Directory -Force -Path "resources/memories/lossless_tmp" | Out-Null
+          [System.IO.Compression.ZipFile]::ExtractToDirectory(
+              (Resolve-Path "lossless.zip").Path,
+              (Resolve-Path "resources/memories/lossless_tmp").Path
+          )
           $losslessRoot = (Get-ChildItem -Path "resources/memories/lossless_tmp" -Directory | Select-Object -First 1).FullName
           if ($losslessRoot) {
             Write-Host "Moving Lossless from $losslessRoot"
@@ -110,7 +123,14 @@ jobs:
 
           Write-Host ">>> Downloading & Extracting Humanizer"
           Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
-          Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
+          if (Test-Path "resources/humanizer_tmp") {
+              Remove-Item "resources/humanizer_tmp" -Recurse -Force -ErrorAction Stop
+          }
+          New-Item -ItemType Directory -Force -Path "resources/humanizer_tmp" | Out-Null
+          [System.IO.Compression.ZipFile]::ExtractToDirectory(
+              (Resolve-Path "humanizer.zip").Path,
+              (Resolve-Path "resources/humanizer_tmp").Path
+          )
           $humanizerRoot = (Get-ChildItem -Path "resources/humanizer_tmp" -Directory | Select-Object -First 1).FullName
           if ($humanizerRoot) {
             Write-Host "Copying Humanizer from $humanizerRoot"
