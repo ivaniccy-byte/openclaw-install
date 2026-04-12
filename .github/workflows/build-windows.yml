@@ -72,30 +72,23 @@ jobs:
           Write-Host ">>> Downloading & Extracting OpenClaw Skills"
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
 
-          # Use .NET ZipFile instead of Expand-Archive to avoid .github directory bug
-          if (Test-Path "resources/skills_tmp") {
-              Remove-Item "resources/skills_tmp" -Recurse -Force -ErrorAction Stop
-          }
-          New-Item -ItemType Directory -Force -Path "resources/skills_tmp" | Out-Null
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          [System.IO.Compression.ZipFile]::ExtractToDirectory(
-              (Resolve-Path "skills.zip").Path,
-              (Resolve-Path "resources/skills_tmp").Path
-          )
+          # Clean and extract using tar (built-in on Windows runner, handles dot-files correctly)
+          cmd /c "rmdir /s /q resources\skills_tmp 2>nul || exit 0"
+          tar -xf skills.zip -C resources
+          Write-Host "Skills extracted to:"
+          Get-ChildItem -Path "resources" -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
 
-          # Find the extracted root directory
-          $skillsRoot = Get-ChildItem -Path "resources/skills_tmp" -Directory | Select-Object -First 1
-          if (-not $skillsRoot) {
-              Write-Error "Failed to find extracted skills directory"
-              Write-Error "Contents of skills_tmp:"
-              Get-ChildItem -Path "resources/skills_tmp" -Force | Format-List
+          # Find the extracted root directory (skills-main from the zip)
+          $skillsRoot = Join-Path "resources" "skills-main"
+          if (-not (Test-Path $skillsRoot)) {
+              Write-Error "Failed to find skills-main directory"
               exit 1
           }
-          Write-Host "Skills root: $($skillsRoot.FullName)"
+          Write-Host "Skills root: $skillsRoot"
 
           $skillsToInclude = @("tavily-search", "multi-search-engine", "word-document-processor", "excel-automation")
           foreach ($skill in $skillsToInclude) {
-              $src = Join-Path $skillsRoot.FullName $skill
+              $src = Join-Path $skillsRoot $skill
               if (Test-Path $src) {
                   Write-Host "Copying Skill: $skill"
                   Copy-Item -Path $src -Destination "resources/skills" -Recurse -Force
@@ -106,15 +99,9 @@ jobs:
 
           Write-Host ">>> Downloading & Extracting Lossless Memory"
           Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
-          if (Test-Path "resources/memories/lossless_tmp") {
-              Remove-Item "resources/memories/lossless_tmp" -Recurse -Force -ErrorAction Stop
-          }
-          New-Item -ItemType Directory -Force -Path "resources/memories/lossless_tmp" | Out-Null
-          [System.IO.Compression.ZipFile]::ExtractToDirectory(
-              (Resolve-Path "lossless.zip").Path,
-              (Resolve-Path "resources/memories/lossless_tmp").Path
-          )
-          $losslessRoot = (Get-ChildItem -Path "resources/memories/lossless_tmp" -Directory | Select-Object -First 1).FullName
+          cmd /c "rmdir /s /q resources\memories\lossless_tmp 2>nul || exit 0"
+          tar -xf lossless.zip -C resources/memories
+          $losslessRoot = (Get-ChildItem -Path "resources/memories" -Directory -Filter "*lossless*" | Select-Object -First 1).FullName
           if ($losslessRoot) {
             Write-Host "Moving Lossless from $losslessRoot"
             New-Item -ItemType Directory -Force -Path "resources/memories/lossless"
@@ -123,15 +110,9 @@ jobs:
 
           Write-Host ">>> Downloading & Extracting Humanizer"
           Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
-          if (Test-Path "resources/humanizer_tmp") {
-              Remove-Item "resources/humanizer_tmp" -Recurse -Force -ErrorAction Stop
-          }
-          New-Item -ItemType Directory -Force -Path "resources/humanizer_tmp" | Out-Null
-          [System.IO.Compression.ZipFile]::ExtractToDirectory(
-              (Resolve-Path "humanizer.zip").Path,
-              (Resolve-Path "resources/humanizer_tmp").Path
-          )
-          $humanizerRoot = (Get-ChildItem -Path "resources/humanizer_tmp" -Directory | Select-Object -First 1).FullName
+          cmd /c "rmdir /s /q resources\humanizer_tmp 2>nul || exit 0"
+          tar -xf humanizer.zip -C resources
+          $humanizerRoot = (Get-ChildItem -Path "resources" -Directory -Filter "*humanizer*" | Select-Object -First 1).FullName
           if ($humanizerRoot) {
             Write-Host "Copying Humanizer from $humanizerRoot"
             New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
@@ -139,27 +120,23 @@ jobs:
           }
 
           Write-Host ">>> Cleanup and Finalizing"
-          $toCleanup = @("resources/skills_tmp", "resources/humanizer_tmp", "resources/memories/lossless_tmp")
+          $dirsToCleanup = @(
+              "resources/skills-main",
+              "resources/memories/lossless-claw-enhanced-main",
+              "resources/humanizer-main"
+          )
           $filesToCleanup = @("skills.zip", "lossless.zip", "humanizer.zip")
 
-          foreach ($dir in $toCleanup) {
+          foreach ($dir in $dirsToCleanup) {
               if (Test-Path $dir) {
-                  Try {
-                      Write-Host "Cleaning up directory: $dir"
-                      # Use -ErrorAction Stop with proper exception handling for robust cleanup
-                      Get-ChildItem -Path $dir -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-                      Remove-Item -Path $dir -Force -Recurse -ErrorAction SilentlyContinue
-                  } Catch {
-                      Write-Warning "Failed to delete $dir`: $_"
-                  }
-              } else {
-                  Write-Host "Directory $dir does not exist, skipping cleanup."
+                  cmd /c "rmdir /s /q $dir 2>nul || exit 0"
+                  Write-Host "Cleaned up: $dir"
               }
           }
           foreach ($file in $filesToCleanup) {
-              if (Test-Path $file) { 
-                  Write-Host "Cleaning up file: $file"
-                  Remove-Item $file -Force -ErrorAction SilentlyContinue 
+              if (Test-Path $file) {
+                  Remove-Item $file -Force
+                  Write-Host "Cleaned up: $file"
               }
           }
           Write-Host ">>> Cleanup Complete"
