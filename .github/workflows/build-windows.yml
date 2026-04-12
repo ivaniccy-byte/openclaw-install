@@ -163,8 +163,11 @@ jobs:
         timeout-minutes: 60
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_DEBUG: true
+          TAURI_BUILD_DEBUG: 1
+          TAURI_CLI_DEBUG: true
+          RUST_BACKTRACE: full
           CARGO_LOG: tauri_build=info
-          RUST_BACKTRACE: 1
 
       - name: Debug resources size
         if: failure()
