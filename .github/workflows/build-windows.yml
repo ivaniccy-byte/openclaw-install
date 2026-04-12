@@ -66,39 +66,59 @@ jobs:
 
       - name: Download Professional Skills & Memory Systems
         run: |
-          New-Item -ItemType Directory -Force -Path "resources/skills"
-          New-Item -ItemType Directory -Force -Path "resources/memories"
-          
-          # OpenClaw Skills
+          Write-Host ">>> Initializing Directories"
+          New-Item -ItemType Directory -Force -Path "resources/skills", "resources/memories"
+
+          Write-Host ">>> Downloading & Extracting OpenClaw Skills"
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
           Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
-          
+          $skillsRoot = (Get-ChildItem -Path "resources/skills_tmp" -Directory | Select-Object -First 1).FullName
           $skillsToInclude = @("tavily-search", "multi-search-engine", "word-document-processor", "excel-automation")
-          Get-ChildItem -Path "resources/skills_tmp/*" -Directory | ForEach-Object {
-              $root = $_.FullName
-              foreach ($skill in $skillsToInclude) {
-                  $skillPath = Join-Path $root $skill
-                  if (Test-Path $skillPath) { Copy-Item -Path "$skillPath" -Destination "resources/skills" -Recurse -Force }
+          foreach ($skill in $skillsToInclude) {
+              $src = Join-Path $skillsRoot $skill
+              if (Test-Path $src) { 
+                  Write-Host "Copying Skill: $skill"
+                  Copy-Item -Path "$src" -Destination "resources/skills" -Recurse -Force 
               }
           }
-          
-          # Memory: Lossless Claw Enhanced
+
+          Write-Host ">>> Downloading & Extracting Lossless Memory"
           Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
           Expand-Archive -Path "lossless.zip" -DestinationPath "resources/memories/lossless_tmp" -Force
-          Move-Item -Path "resources/memories/lossless_tmp/*/*" -Destination "resources/memories/lossless" -Force
-          Remove-Item "resources/memories/lossless_tmp" -Recurse -Force
-          
-          # Skill: Humanizer
-          Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
-          Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
-          Get-ChildItem -Path "resources/humanizer_tmp/*" -Directory | ForEach-Object {
-              Copy-Item -Path "$($_.FullName)" -Destination "resources/skills/humanizer" -Recurse -Force
+          $losslessRoot = (Get-ChildItem -Path "resources/memories/lossless_tmp" -Directory | Select-Object -First 1).FullName
+          if ($losslessRoot) {
+            Write-Host "Moving Lossless from $losslessRoot"
+            New-Item -ItemType Directory -Force -Path "resources/memories/lossless"
+            Move-Item -Path "$losslessRoot/*" -Destination "resources/memories/lossless" -Force
           }
 
-          # Cleanup
-          Remove-Item -Path "resources/skills_tmp" -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item -Path "resources/humanizer_tmp" -Recurse -Force -ErrorAction SilentlyContinue
-          @("skills.zip", "lossless.zip", "humanizer.zip") | ForEach-Object { if (Test-Path $_) { Remove-Item $_ -Force } }
+          Write-Host ">>> Downloading & Extracting Humanizer"
+          Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
+          Expand-Archive -Path "humanizer.zip" -DestinationPath "resources/humanizer_tmp" -Force
+          $humanizerRoot = (Get-ChildItem -Path "resources/humanizer_tmp" -Directory | Select-Object -First 1).FullName
+          if ($humanizerRoot) {
+            Write-Host "Copying Humanizer from $humanizerRoot"
+            New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
+            Copy-Item -Path "$humanizerRoot/*" -Destination "resources/skills/humanizer" -Recurse -Force
+          }
+
+          Write-Host ">>> Cleanup and Finalizing"
+          $toCleanup = @("resources/skills_tmp", "resources/humanizer_tmp", "resources/memories/lossless_tmp")
+          $filesToCleanup = @("skills.zip", "lossless.zip", "humanizer.zip")
+
+          foreach ($dir in $toCleanup) {
+              if (Test-Path $dir) {
+                  Try {
+                      Write-Host "Cleaning up directory: $dir"
+                      Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
+                  } Catch {
+                      Write-Warning "Failed to delete $dir, but continuing..."
+                  }
+              }
+          }
+          foreach ($file in $filesToCleanup) {
+              if (Test-Path $file) { Remove-Item $file -Force -ErrorAction SilentlyContinue }
+          }
 
 
 

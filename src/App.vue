@@ -57,7 +57,7 @@ const goToInstaller = () => {
       </nav>
 
       <div class="sidebar-footer">
-        <div class="version-info">v0.9.3</div>
+        <div class="version-info">v1.0.0</div>
       </div>
     </aside>
 
