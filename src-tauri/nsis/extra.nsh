@@ -10,14 +10,24 @@
     DetailPrint "Configuring Environment Variables..."
     WriteRegStr HKCU "Environment" "OPENCLAW_HOME" "$INSTDIR"
     WriteRegStr HKCU "Environment" "OPENCLAW_CONFIG_PATH" "$INSTDIR\openclaw.json"
-    
-    # 2. Add Binaries to PATH (Node and Python)
+
+    # 2. Unpack node_modules from tar.gz
+    DetailPrint "Unpacking OpenClaw core dependencies (node_modules)..."
+    ExecWait 'cmd /c tar -xzf "$INSTDIR\openclaw\node_modules.tar.gz" -C "$INSTDIR\openclaw" && del /f "$INSTDIR\openclaw\node_modules.tar.gz"' $0
+    IntCmp $0 0 node_unpack_ok
+        DetailPrint "Warning: Failed to unpack node_modules (error code: $0). OpenClaw may not function correctly."
+        Goto node_unpack_done
+    node_unpack_ok:
+        DetailPrint "node_modules unpacked successfully."
+    node_unpack_done:
+
+    # 3. Add Binaries to PATH (Node and Python)
     ReadRegStr $0 HKCU "Environment" "PATH"
-    
+
     # Simple check and append
     # Note: For a more robust PATH management, normally we'd use a dedicated NSH
     # but here we do a basic check to avoid obvious duplicates
-    
+
     # Append Node Runtime
     Push "$INSTDIR\node-runtime"
     Push $0
@@ -37,10 +47,10 @@
     skip_python_path:
 
     WriteRegStr HKCU "Environment" "PATH" $0
-    
+
     # Notify system of environment changes
     SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
-    
+
     DetailPrint "Environment variables configured successfully."
 !macroend
 

@@ -72,6 +72,12 @@ jobs:
           Set-Content -Path "start.js" -Value "require('./node_modules/openclaw/bin/openclaw.js');"
           Pop-Location
 
+          # Pack node_modules into a single archive to avoid Tauri glob explosion
+          Write-Host ">>> Packing node_modules into tar.gz..."
+          tar -czf "resources/openclaw/node_modules.tar.gz" -C "resources/openclaw" node_modules
+          Remove-Item -Path "resources/openclaw/node_modules" -Recurse -Force
+          Write-Host ">>> Packed. Original node_modules removed, tar.gz kept."
+
       - name: Download Professional Skills & Memory Systems
         run: |
           Write-Host ">>> Initializing Directories"
