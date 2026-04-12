@@ -160,6 +160,20 @@ jobs:
         timeout-minutes: 60
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARGO_LOG: tauri_build=info
+          RUST_BACKTRACE: 1
+
+      - name: Debug resources size
+        if: failure()
+        run: |
+          Write-Host "=== Resources file count ==="
+          $count = (Get-ChildItem -Path "resources" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
+          Write-Host "Total files in resources: $count"
+          Write-Host "=== Top-level directories ==="
+          Get-ChildItem -Path "resources" -Directory | ForEach-Object {
+              $subCount = (Get-ChildItem -Path $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
+              Write-Host "  $($_.Name): $subCount files"
+          }
 
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
