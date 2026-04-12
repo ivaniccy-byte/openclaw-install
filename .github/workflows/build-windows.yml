@@ -212,6 +212,10 @@ jobs:
           mkdir -p resources/openclaw
           mkdir -p resources/skills
           mkdir -p resources/memories
+          touch resources/node-runtime/.gitkeep
+          touch resources/python-runtime/.gitkeep
+          touch resources/skills/.gitkeep
+          touch resources/memories/.gitkeep
           touch resources/openclaw/start.js
           echo "Placeholder for CI" > resources/openclaw/placeholder.tar.gz
 
