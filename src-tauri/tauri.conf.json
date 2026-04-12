@@ -33,8 +33,15 @@
   },
     "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
-    "resources": ["../resources/**/*"],
+    "targets": ["nsis"],
+    "resources": [
+      "../resources/node-runtime/**/*",
+      "../resources/python-runtime/**/*",
+      "../resources/openclaw/*.tar.gz",
+      "../resources/openclaw/start.js",
+      "../resources/skills/**/*",
+      "../resources/memories/**/*"
+    ],
     "icon": [
 
       "icons/32x32.png",
