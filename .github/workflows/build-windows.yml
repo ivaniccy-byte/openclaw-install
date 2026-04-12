@@ -71,14 +71,30 @@ jobs:
 
           Write-Host ">>> Downloading & Extracting OpenClaw Skills"
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
+          
+          # Ensure clean extraction
+          if (Test-Path "resources/skills_tmp") {
+              Remove-Item "resources/skills_tmp" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          New-Item -ItemType Directory -Force -Path "resources/skills_tmp"
           Expand-Archive -Path "skills.zip" -DestinationPath "resources/skills_tmp" -Force
-          $skillsRoot = (Get-ChildItem -Path "resources/skills_tmp" -Directory | Select-Object -First 1).FullName
+          
+          # Find the extracted root directory
+          $skillsRoot = Get-ChildItem -Path "resources/skills_tmp" -Directory | Select-Object -First 1
+          if (-not $skillsRoot) {
+              Write-Error "Failed to find extracted skills directory"
+              exit 1
+          }
+          Write-Host "Skills root: $($skillsRoot.FullName)"
+          
           $skillsToInclude = @("tavily-search", "multi-search-engine", "word-document-processor", "excel-automation")
           foreach ($skill in $skillsToInclude) {
-              $src = Join-Path $skillsRoot $skill
-              if (Test-Path $src) { 
+              $src = Join-Path $skillsRoot.FullName $skill
+              if (Test-Path $src) {
                   Write-Host "Copying Skill: $skill"
-                  Copy-Item -Path "$src" -Destination "resources/skills" -Recurse -Force 
+                  Copy-Item -Path $src -Destination "resources/skills" -Recurse -Force
+              } else {
+                  Write-Warning "Skill not found: $skill (expected at: $src)"
               }
           }
 
@@ -110,15 +126,23 @@ jobs:
               if (Test-Path $dir) {
                   Try {
                       Write-Host "Cleaning up directory: $dir"
-                      Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
+                      # Use -ErrorAction Stop with proper exception handling for robust cleanup
+                      Get-ChildItem -Path $dir -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+                      Remove-Item -Path $dir -Force -Recurse -ErrorAction SilentlyContinue
                   } Catch {
-                      Write-Warning "Failed to delete $dir, but continuing..."
+                      Write-Warning "Failed to delete $dir`: $_"
                   }
+              } else {
+                  Write-Host "Directory $dir does not exist, skipping cleanup."
               }
           }
           foreach ($file in $filesToCleanup) {
-              if (Test-Path $file) { Remove-Item $file -Force -ErrorAction SilentlyContinue }
+              if (Test-Path $file) { 
+                  Write-Host "Cleaning up file: $file"
+                  Remove-Item $file -Force -ErrorAction SilentlyContinue 
+              }
           }
+          Write-Host ">>> Cleanup Complete"
 
 
 
