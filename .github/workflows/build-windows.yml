@@ -114,19 +114,19 @@ jobs:
           $humanizerRoot = "humanizer"
           
           # 1. Download Lossless Memory Enhanced
-          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/lossless-claw-enhanced/archive/refs/heads/master.zip" -OutFile "lossless.zip"
+          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
           Expand-Archive -Path "lossless.zip" -DestinationPath "lossless-tmp" -Force
-          Move-Item -Path "lossless-tmp/lossless-claw-enhanced-master" -Destination "resources/lossless-claw-enhanced" -Force
+          Move-Item -Path "lossless-tmp/lossless-claw-enhanced-main" -Destination "resources/lossless-claw-enhanced" -Force
           
           # 2. Setup Memories folder for bundling
           New-Item -ItemType Directory -Force -Path "resources/memories/lossless"
           Copy-Item -Path "resources/lossless-claw-enhanced/*" -Destination "resources/memories/lossless" -Recurse -Force
           
           # 3. Setup Humanizer Skill
-          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/humanizer/archive/refs/heads/master.zip" -OutFile "humanizer.zip"
+          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
           Expand-Archive -Path "humanizer.zip" -DestinationPath "humanizer-tmp" -Force
           New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
-          Move-Item -Path "humanizer-tmp/humanizer-master/*" -Destination "resources/skills/humanizer" -Force
+          Move-Item -Path "humanizer-tmp/humanizer-main/*" -Destination "resources/skills/humanizer" -Force
 
           # 4. Add other community skills (example structure)
           # We can add more here later, but ensure they all have subdirectories
