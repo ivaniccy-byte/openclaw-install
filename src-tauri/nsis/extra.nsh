@@ -1,8 +1,9 @@
 !macro NSIS_HOOK_PREINSTALL
-    # Force installation directory to %USERPROFILE%\.openclaw
-    # Even if the user selected something else, we align with OpenClaw standard
+    # Hard-enforce installation directory to %USERPROFILE%\.openclaw
+    # This overrides the default AppData/Local path from Tauri
     StrCpy $INSTDIR "$PROFILE\.openclaw"
-    DetailPrint "Target Installation Directory: $INSTDIR"
+    SetOutPath "$INSTDIR"
+    DetailPrint "[Hardened] Target Installation Directory redirected to: $INSTDIR"
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
@@ -12,7 +13,8 @@
     WriteRegStr HKCU "Environment" "OPENCLAW_CONFIG_PATH" "$INSTDIR\openclaw.json"
 
     # 2. Unpack node_modules from tar.gz
-    DetailPrint "Unpacking OpenClaw core dependencies (node_modules)..."
+    DetailPrint "Unpacking OpenClaw core dependencies (node_modules) in $INSTDIR\openclaw ..."
+    # Use absolute paths to avoid any ambiguity
     ExecWait 'cmd /c tar -xzf "$INSTDIR\openclaw\node_modules.tar.gz" -C "$INSTDIR\openclaw" && del /f "$INSTDIR\openclaw\node_modules.tar.gz"' $0
     IntCmp $0 0 node_unpack_ok
         DetailPrint "Warning: Failed to unpack node_modules (error code: $0). OpenClaw may not function correctly."

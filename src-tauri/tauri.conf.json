@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenClaw 一键安装版",
+  "productName": "OpenClaw-One-Click-Installer",
   "version": "1.0.0",
   "identifier": "com.openclaw.workplace",
   "build": {
