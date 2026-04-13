@@ -255,7 +255,25 @@ async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<()
         .or_else(|| std::env::var("OPENCLAW_HOME").ok());
         
     if let Some(path) = path_opt {
-        wrappers::save_config(&path, &config).map_err(|e| e.to_string())?;
+        crate::wrappers::save_config(&path, &config).map_err(|e| e.to_string())?;
+        
+        // 3. 处理开机自启 (Windows 特有逻辑)
+        #[cfg(target_os = "windows")]
+        {
+            use std::process::Command;
+            let exe_path = std::env::current_exe().unwrap_or_default();
+            if config.auto_start {
+                // 添加到注册表 Run 项
+                let _ = Command::new("reg")
+                    .args(&["add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "OpenClawWorkplace", "/t", "REG_SZ", "/d", &format!("\"{}\"", exe_path.to_string_lossy()), "/f"])
+                    .output();
+            } else {
+                // 从注册表移除
+                let _ = Command::new("reg")
+                    .args(&["delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "OpenClawWorkplace", "/f"])
+                    .output();
+            }
+        }
     }
     
     Ok(())

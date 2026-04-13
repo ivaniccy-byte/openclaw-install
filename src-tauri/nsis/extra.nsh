@@ -71,11 +71,97 @@
 
 Section "-UninstallExtra"
     # This runs during uninstallation
-    DeleteRegValue HKCU "Environment" "OPENCLAW_HOME"
     
-    # Notify system
+    # 1. Remove specific environment variables
+    DeleteRegValue HKCU "Environment" "OPENCLAW_HOME"
+    DeleteRegValue HKCU "Environment" "OPENCLAW_CONFIG_PATH"
+    
+    # 2. Remove Auto-start registration
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "OpenClawWorkplace"
+    
+    # 2. Path Cleaning (Remove our 3 custom paths from system PATH)
+    ReadRegStr $0 HKCU "Environment" "PATH"
+    
+    # Remove bin
+    Push "$INSTDIR\bin"
+    Push ""
+    Push $0
+    Call StrReplace
+    Pop $0
+
+    # Remove node-runtime
+    Push "$INSTDIR\node-runtime"
+    Push ""
+    Push $0
+    Call StrReplace
+    Pop $0
+
+    # Remove python-runtime
+    Push "$INSTDIR\python-runtime"
+    Push ""
+    Push $0
+    Call StrReplace
+    Pop $0
+    
+    # Clean up double semicolons results from replacements
+    Push ";;"
+    Push ";"
+    Push $0
+    Call StrReplace
+    Pop $0
+
+    WriteRegStr HKCU "Environment" "PATH" $0
+
+    # 3. Nuclear File Deletion (Recursive removal of .openclaw)
+    # This removes all configs, logs, workspace data, and the binary shim
+    RMDir /r "$INSTDIR"
+    
+    # 4. Penetrative Cache Purge (Webview2 / User Profile data)
+    # The identifier from tauri.conf.json is 'com.openclaw.workplace'
+    # Tauri v2 usually places it in $LOCALAPPDATA/com.openclaw.workplace
+    DetailPrint "Purging AppData caches..."
+    RMDir /r "$LOCALAPPDATA\com.openclaw.workplace"
+    
+    # 5. Notify system of environment changes
     SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
+
+# Helper function: StrReplace
+Function StrReplace
+  Exch $R0 ; string to search in
+  Exch
+  Exch $R1 ; string to replace
+  Exch 2
+  Exch $R2 ; string to replace with
+  Push $R3
+  Push $R4
+  Push $R5
+  Push $R6
+  StrLen $R3 $R1
+  StrLen $R4 $R2
+  StrCpy $R5 0
+  loop:
+    StrCpy $R6 $R0 $R3 $R5
+    StrCmp $R6 $R1 found
+    StrCmp $R6 "" done
+    IntOp $R5 $R5 + 1
+    Goto loop
+  found:
+    StrCpy $R6 $R0 $R5
+    StrCpy $R0 $R0 "" $R5
+    StrCpy $R0 $R0 "" $R3
+    StrCpy $R0 "$R6$R2$R0"
+    IntOp $R5 $R5 + $R4
+    Goto loop
+  done:
+  Pop $R6
+  Pop $R5
+  Pop $R4
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Exch $R0
+FunctionEnd
 
 # Helper function StrStr
 Function StrStr
