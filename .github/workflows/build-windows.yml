@@ -132,6 +132,12 @@ jobs:
           # We can add more here later, but ensure they all have subdirectories
           New-Item -ItemType File -Force -Path "resources/skills/.gitkeep"
 
+          # 5. Generate CLI Shim (openclaw.cmd)
+          Write-Host ">>> Generating CLI Shim..."
+          New-Item -ItemType Directory -Force -Path "resources/bin"
+          $shimContent = "@echo off`nset INSTALL_DIR=%~dp0..`n`"%INSTALL_DIR%\node-runtime\node.exe`" `"%INSTALL_DIR%\openclaw\start.js`" %*"
+          Set-Content -Path "resources/bin/openclaw.cmd" -Value $shimContent
+
       - name: Pre-build Resource Sanity Check
         run: |
           Write-Host ">>> Validating bundled resources..."
