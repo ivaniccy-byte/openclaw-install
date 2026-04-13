@@ -114,7 +114,7 @@ jobs:
           $humanizerRoot = "humanizer"
           
           # 1. Download Lossless Memory Enhanced
-          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
+          Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
           Expand-Archive -Path "lossless.zip" -DestinationPath "lossless-tmp" -Force
           Move-Item -Path "lossless-tmp/lossless-claw-enhanced-main" -Destination "resources/lossless-claw-enhanced" -Force
           
@@ -123,7 +123,7 @@ jobs:
           Copy-Item -Path "resources/lossless-claw-enhanced/*" -Destination "resources/memories/lossless" -Recurse -Force
           
           # 3. Setup Humanizer Skill
-          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
+          Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
           Expand-Archive -Path "humanizer.zip" -DestinationPath "humanizer-tmp" -Force
           New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
           Move-Item -Path "humanizer-tmp/humanizer-main/*" -Destination "resources/skills/humanizer" -Force
