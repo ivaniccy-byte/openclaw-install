@@ -27,9 +27,17 @@ interface Alert {
 }
 
 const healthScore = ref<HealthScore>({
-  score: 100,
-  level: '优秀',
-  details: {},
+  score: 0,
+  level: '加载中',
+  details: {
+    process_alive: false,
+    port_listening: false,
+    main_model_ok: false,
+    memory_system_ok: false,
+    config_valid: false,
+    cpu_usage: 0,
+    memory_usage: 0,
+  },
 })
 
 const alerts = ref<Alert[]>([])

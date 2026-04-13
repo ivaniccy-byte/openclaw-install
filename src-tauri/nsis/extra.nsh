@@ -48,6 +48,15 @@
         StrCpy $0 "$0;$INSTDIR\python-runtime"
     skip_python_path:
 
+    # Append OpenClaw Binaries (CLI Shim)
+    Push "$INSTDIR\bin"
+    Push $0
+    Call StrStr
+    Pop $1
+    StrCmp $1 "" 0 skip_bin_path
+        StrCpy $0 "$0;$INSTDIR\bin"
+    skip_bin_path:
+
     WriteRegStr HKCU "Environment" "PATH" $0
 
     # Notify system of environment changes

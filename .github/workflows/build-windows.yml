@@ -108,29 +108,55 @@ jobs:
               }
           }
 
-          Write-Host ">>> Downloading & Extracting Lossless Memory"
-          Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
-          cmd /c "rmdir /s /q resources\memories\lossless_tmp 2>nul || exit 0"
-          tar -xf lossless.zip -C resources/memories
-          $losslessRoot = (Get-ChildItem -Path "resources/memories" -Directory -Filter "*lossless*" | Select-Object -First 1).FullName
-          if ($losslessRoot) {
-            Write-Host "Moving Lossless from $losslessRoot"
-            New-Item -ItemType Directory -Force -Path "resources/memories/lossless"
-            Move-Item -Path "$losslessRoot/*" -Destination "resources/memories/lossless" -Force
-          }
+      - name: Download & Bundle OpenClaw Skills (Hardened)
+        run: |
+          $losslessRoot = "lossless-claw-enhanced"
+          $humanizerRoot = "humanizer"
+          
+          # 1. Download Lossless Memory Enhanced
+          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/lossless-claw-enhanced/archive/refs/heads/master.zip" -OutFile "lossless.zip"
+          Expand-Archive -Path "lossless.zip" -DestinationPath "lossless-tmp" -Force
+          Move-Item -Path "lossless-tmp/lossless-claw-enhanced-master" -Destination "resources/lossless-claw-enhanced" -Force
+          
+          # 2. Setup Memories folder for bundling
+          New-Item -ItemType Directory -Force -Path "resources/memories/lossless"
+          Copy-Item -Path "resources/lossless-claw-enhanced/*" -Destination "resources/memories/lossless" -Recurse -Force
+          
+          # 3. Setup Humanizer Skill
+          Invoke-WebRequest -Uri "https://github.com/ivaniccy-byte/humanizer/archive/refs/heads/master.zip" -OutFile "humanizer.zip"
+          Expand-Archive -Path "humanizer.zip" -DestinationPath "humanizer-tmp" -Force
+          New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
+          Move-Item -Path "humanizer-tmp/humanizer-master/*" -Destination "resources/skills/humanizer" -Force
 
-          Write-Host ">>> Downloading & Extracting Humanizer"
-          Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
-          cmd /c "rmdir /s /q resources\humanizer_tmp 2>nul || exit 0"
-          tar -xf humanizer.zip -C resources
-          $humanizerRoot = (Get-ChildItem -Path "resources" -Directory -Filter "*humanizer*" | Select-Object -First 1).FullName
-          if ($humanizerRoot) {
-            Write-Host "Copying Humanizer from $humanizerRoot"
-            New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
-            Copy-Item -Path "$humanizerRoot/*" -Destination "resources/skills/humanizer" -Recurse -Force
-          }
+          # 4. Add other community skills (example structure)
+          # We can add more here later, but ensure they all have subdirectories
+          New-Item -ItemType File -Force -Path "resources/skills/.gitkeep"
 
-          Write-Host ">>> Cleanup and Finalizing"
+      - name: Pre-build Resource Sanity Check
+        run: |
+          Write-Host ">>> Validating bundled resources..."
+          $paths = @(
+            "resources/node-runtime/node.exe",
+            "resources/python-runtime/python.exe",
+            "resources/openclaw/start.js",
+            "resources/openclaw/node_modules.tar.gz",
+            "resources/bin/openclaw.cmd"
+          )
+          
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              Write-Host "[OK] $p exists."
+            } else {
+              Write-Error "[FATAL] $p is MISSING! Build aborted."
+              exit 1
+            }
+          }
+          
+          Write-Host ">>> Skills bundled:"
+          Get-ChildItem -Path "resources/skills"
+
+      - name: Cleanup and Finalizing
+        run: |
           $dirsToCleanup = @(
               "resources/skills-main",
               "resources/memories/lossless-claw-enhanced-main",

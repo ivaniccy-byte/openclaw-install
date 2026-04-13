@@ -40,7 +40,8 @@
       "../resources/openclaw/*.tar.gz",
       "../resources/openclaw/start.js",
       "../resources/skills/**/*",
-      "../resources/memories/**/*"
+      "../resources/memories/**/*",
+      "resources/bin/*"
     ],
     "icon": [
 

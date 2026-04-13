@@ -169,6 +169,8 @@ const openProviderUrl = (provider: string) => {
     glm: 'https://open.bigmodel.cn',
     jd: 'https://www.jdcloud.com',
     minimax: 'https://www.minimax.chat',
+    deepseek: 'https://platform.deepseek.com',
+    siliconflow: 'https://cloud.siliconflow.cn',
   }
   if (urls[provider]) {
     window.open(urls[provider], '_blank')

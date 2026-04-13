@@ -120,39 +120,27 @@ impl OpenClawProcess {
 
     /// 查找Node.js可执行文件
     fn find_node_exe(&self) -> Result<String, WrapperError> {
-        // 1. 先检查内置运行时 (基于安装目录)
         let node_sub_path = if cfg!(target_os = "windows") {
             "node-runtime/node.exe"
         } else {
             "node-runtime/bin/node"
         };
 
-        let built_in_node = std::path::Path::new(&self.install_path)
-            .join(node_sub_path);
-
-        if built_in_node.exists() {
-            return Ok(built_in_node.to_string_lossy().to_string());
+        // 1. 优先检查当前安装路径下的 node
+        let local_node = std::path::Path::new(&self.install_path).join(node_sub_path);
+        if local_node.exists() {
+            return Ok(local_node.to_string_lossy().to_string());
         }
 
-        // 2. 检查全局环境变量 OPENCLAW_HOME
-        if let Ok(home) = std::env::var("OPENCLAW_HOME") {
-            let env_node = std::path::Path::new(&home).join(node_sub_path);
-            if env_node.exists() {
-                return Ok(env_node.to_string_lossy().to_string());
+        // 2. 检查父目录下的 node (针对 openclaw 文件夹内的脚本调用)
+        if let Some(parent) = std::path::Path::new(&self.install_path).parent() {
+            let parent_node = parent.join(node_sub_path);
+            if parent_node.exists() {
+                return Ok(parent_node.to_string_lossy().to_string());
             }
         }
 
-        // 3. 特殊处理：检查用户家目录默认路径
-        if let Ok(home) = std::env::var("USERPROFILE") {
-            let user_node = std::path::Path::new(&home)
-                .join(".openclaw")
-                .join(node_sub_path);
-            if user_node.exists() {
-                return Ok(user_node.to_string_lossy().to_string());
-            }
-        }
-
-        // 4. 检查系统PATH
+        // 3. 检查系统环境变量
         let node_cmd = if cfg!(target_os = "windows") { "node.exe" } else { "node" };
         if let Ok(output) = Command::new(node_cmd).arg("--version").output() {
             if output.status.success() {
@@ -160,7 +148,7 @@ impl OpenClawProcess {
             }
         }
 
-        Err(WrapperError::StartFailed("未找到Node.js运行时，请确保已安装或内置资源完整".to_string()))
+        Err(WrapperError::StartFailed("未找到Node.js运行时，请确保安装完整".to_string()))
     }
 }
 
@@ -188,30 +176,18 @@ pub fn perform_install(
     log::info!("目标安装目录: {:?}", target_dir);
 
     // 1. 复制必备组件
-    let openclaw_src = src_resources.join("openclaw");
-    log::info!("OpenClaw源路径: {:?}, 存在: {}", openclaw_src, openclaw_src.exists());
-    copy_dir_recursive(&openclaw_src, &target_dir.join("openclaw"))?;
+    copy_dir_recursive(&src_resources.join("openclaw"), &target_dir.join("openclaw"))?;
+    copy_dir_recursive(&src_resources.join("node-runtime"), &target_dir.join("node-runtime"))?;
+    copy_dir_recursive(&src_resources.join("python-runtime"), &target_dir.join("python-runtime"))?;
+    copy_dir_recursive(&src_resources.join("bin"), &target_dir.join("bin"))?;
     
-    // 2. 复制Node运行时
-    copy_dir_recursive(
-        &src_resources.join("node-runtime"),
-        &target_dir.join("node-runtime")
-    )?;
-
-    // 3. 复制Python运行时
-    copy_dir_recursive(
-        &src_resources.join("python-runtime"),
-        &target_dir.join("python-runtime")
-    )?;
-
-    // 3. 复制可选组件
+    // 2. 复制可选组件
     if options.selected_memory == "lossless-enhanced" {
         copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("lossless-claw-enhanced"))?;
         copy_dir_recursive(&src_resources.join("memories"), &target_dir.join("workspace").join("memories"))?;
     }
 
     if !options.selected_skills.is_empty() {
-        // 如果选择了技能，复制到 workspace/skills 目录 (OpenClaw v3.28 规范)
         let dst_skills = target_dir.join("workspace").join("skills");
         copy_dir_recursive(&src_resources.join("skills"), &dst_skills)?;
     }
