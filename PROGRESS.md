@@ -21,17 +21,20 @@
 - **CLI 工具**: `resources/bin/openclaw.cmd`
 - **环境变量**: 自动配置 `OPENCLAW_HOME` 并安全追加系统 `PATH`
 - **一键卸载**: 支持可选卸载各依赖组件，干净移除残留文件与环境变量
+  - 可选删除 Node.js 运行时
+  - 可选删除 Python 运行时
+  - 可选删除 OpenClaw 及相关数据（Skills、Memories、配置文件随 OpenClaw 一并处理）
 
 ---
 
 ## 开发进度
 
-### 🔄 v1.0.1 (进行中)
-- [ ] **卸载器重构**:
+### ✅ v1.0.1 (已完成)
+- [x] **卸载器重构**:
   - 添加可选卸载界面，用户可选择保留哪些组件
-  - 依次卸载：Node.js 运行时、Python 运行时、OpenClaw 核心、Skills、Memories
-  - 保留用户配置文件选项
-- [ ] **安装问题修复**:
+  - 依次询问：Node.js 运行时、Python 运行时、OpenClaw 核心（含 Skills、Memories）
+  - Skills 和 Memories 随 OpenClaw 一并删除，不单独询问
+- [x] **安装问题修复**:
   - 修复 NSIS 钩子导致安装卡住的问题
   - 使用 nsExec 替代 ExecWait 执行 tar 解压
 
@@ -44,6 +47,7 @@
   - 对齐 `%USERPROFILE%\.openclaw` 安装路径
   - 实现 NSIS 环境变量自动化注册
   - 完善清理卸载流程
+  - 添加卸载可选界面（Node.js/Python/OpenClaw 分别询问）
 - [x] **UI/UX 深度优化**:
   - 动态展示本命路径提示
   - 修复 Skill 全选逻辑与布局

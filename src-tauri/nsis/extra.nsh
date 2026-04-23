@@ -133,8 +133,8 @@
         DetailPrint "保留 Python 运行时"
     python_done:
 
-    # 询问删除 OpenClaw 核心
-    MessageBox MB_YESNO "是否删除 OpenClaw 核心？$\r$\n$\r$\n选择「否」可保留配置和数据。" IDYES del_core IDNO skip_core
+    # 询问删除 OpenClaw 核心（包含 Skills、Memories、配置文件）
+    MessageBox MB_YESNO "是否删除 OpenClaw 核心？$\r$\n$\r$\n包含：Skills、Memories、配置文件$\r$\n$\r$\n选择「否」可保留配置和数据。" IDYES del_core IDNO skip_core
     del_core:
         DetailPrint "删除 OpenClaw 核心..."
         RMDir /r "$INSTDIR\resources\openclaw"
