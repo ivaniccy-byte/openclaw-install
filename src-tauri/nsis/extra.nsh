@@ -13,9 +13,9 @@
     WriteRegStr HKCU "Environment" "OPENCLAW_CONFIG_PATH" "$INSTDIR\openclaw.json"
 
     # 2. Unpack node_modules from tar.gz
-    DetailPrint "Unpacking OpenClaw core dependencies (node_modules) in $INSTDIR\openclaw ..."
+    DetailPrint "Unpacking OpenClaw core dependencies (node_modules) in $INSTDIR\resources\openclaw ..."
     # Use absolute paths to avoid any ambiguity
-    ExecWait 'cmd /c tar -xzf "$INSTDIR\openclaw\node_modules.tar.gz" -C "$INSTDIR\openclaw" && del /f "$INSTDIR\openclaw\node_modules.tar.gz"' $0
+    ExecWait 'cmd /c tar -xzf "$INSTDIR\resources\openclaw\node_modules.tar.gz" -C "$INSTDIR\resources\openclaw" && del /f "$INSTDIR\resources\openclaw\node_modules.tar.gz"' $0
     IntCmp $0 0 node_unpack_ok
         DetailPrint "Warning: Failed to unpack node_modules (error code: $0). OpenClaw may not function correctly."
         Goto node_unpack_done
@@ -31,30 +31,30 @@
     # but here we do a basic check to avoid obvious duplicates
 
     # Append Node Runtime
-    Push "$INSTDIR\node-runtime"
+    Push "$INSTDIR\resources\node-runtime"
     Push $0
     Call StrStr
     Pop $1
     StrCmp $1 "" 0 skip_node_path
-        StrCpy $0 "$0;$INSTDIR\node-runtime"
+        StrCpy $0 "$0;$INSTDIR\resources\node-runtime"
     skip_node_path:
 
     # Append Python Runtime
-    Push "$INSTDIR\python-runtime"
+    Push "$INSTDIR\resources\python-runtime"
     Push $0
     Call StrStr
     Pop $1
     StrCmp $1 "" 0 skip_python_path
-        StrCpy $0 "$0;$INSTDIR\python-runtime"
+        StrCpy $0 "$0;$INSTDIR\resources\python-runtime"
     skip_python_path:
 
     # Append OpenClaw Binaries (CLI Shim)
-    Push "$INSTDIR\bin"
+    Push "$INSTDIR\resources\bin"
     Push $0
     Call StrStr
     Pop $1
     StrCmp $1 "" 0 skip_bin_path
-        StrCpy $0 "$0;$INSTDIR\bin"
+        StrCpy $0 "$0;$INSTDIR\resources\bin"
     skip_bin_path:
 
     WriteRegStr HKCU "Environment" "PATH" $0
@@ -71,38 +71,38 @@
 
 Section "-UninstallExtra"
     # This runs during uninstallation
-    
+
     # 1. Remove specific environment variables
     DeleteRegValue HKCU "Environment" "OPENCLAW_HOME"
     DeleteRegValue HKCU "Environment" "OPENCLAW_CONFIG_PATH"
-    
+
     # 2. Remove Auto-start registration
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "OpenClawWorkplace"
-    
+
     # 2. Path Cleaning (Remove our 3 custom paths from system PATH)
     ReadRegStr $0 HKCU "Environment" "PATH"
-    
-    # Remove bin
-    Push "$INSTDIR\bin"
+
+    # Remove resources/bin
+    Push "$INSTDIR\resources\bin"
     Push ""
     Push $0
     Call StrReplace
     Pop $0
 
-    # Remove node-runtime
-    Push "$INSTDIR\node-runtime"
+    # Remove resources/node-runtime
+    Push "$INSTDIR\resources\node-runtime"
     Push ""
     Push $0
     Call StrReplace
     Pop $0
 
-    # Remove python-runtime
-    Push "$INSTDIR\python-runtime"
+    # Remove resources/python-runtime
+    Push "$INSTDIR\resources\python-runtime"
     Push ""
     Push $0
     Call StrReplace
     Pop $0
-    
+
     # Clean up double semicolons results from replacements
     Push ";;"
     Push ";"
@@ -115,13 +115,13 @@ Section "-UninstallExtra"
     # 3. Nuclear File Deletion (Recursive removal of .openclaw)
     # This removes all configs, logs, workspace data, and the binary shim
     RMDir /r "$INSTDIR"
-    
+
     # 4. Penetrative Cache Purge (Webview2 / User Profile data)
     # The identifier from tauri.conf.json is 'com.openclaw.workplace'
     # Tauri v2 usually places it in $LOCALAPPDATA/com.openclaw.workplace
     DetailPrint "Purging AppData caches..."
     RMDir /r "$LOCALAPPDATA\com.openclaw.workplace"
-    
+
     # 5. Notify system of environment changes
     SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd

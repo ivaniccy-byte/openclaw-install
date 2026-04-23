@@ -51,22 +51,22 @@ jobs:
 
       - name: Extract Node.js Runtime
         run: |
-          New-Item -ItemType Directory -Force -Path "resources/node-runtime"
-          Expand-Archive -Path "node-v22.12.0-win-x64.zip" -DestinationPath "resources/node-runtime/tmp" -Force
-          Copy-Item -Path "resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "resources/node-runtime" -Recurse -Force
-          Remove-Item -Path "resources/node-runtime/tmp" -Recurse -Force
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/node-runtime"
+          Expand-Archive -Path "node-v22.12.0-win-x64.zip" -DestinationPath "src-tauri/resources/node-runtime/tmp" -Force
+          Copy-Item -Path "src-tauri/resources/node-runtime/tmp/node-v22.12.0-win-x64/*" -Destination "src-tauri/resources/node-runtime" -Recurse -Force
+          Remove-Item -Path "src-tauri/resources/node-runtime/tmp" -Recurse -Force
 
       - name: Download Python 3.10 Embeddable
         run: |
-          New-Item -ItemType Directory -Force -Path "resources/python-runtime"
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/python-runtime"
           Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip" -OutFile "python-embed.zip"
-          Expand-Archive -Path "python-embed.zip" -DestinationPath "resources/python-runtime" -Force
+          Expand-Archive -Path "python-embed.zip" -DestinationPath "src-tauri/resources/python-runtime" -Force
           Remove-Item "python-embed.zip"
 
       - name: Install Professional OpenClaw Core & Dependencies
         run: |
-          New-Item -ItemType Directory -Force -Path "resources/openclaw"
-          Push-Location resources/openclaw
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/openclaw"
+          Push-Location src-tauri/resources/openclaw
           npm init -y
           npm install openclaw@2026.3.28 --save
           # Compress node_modules to avoid too many files for Tauri bundler and match extra.nsh expectation
@@ -78,19 +78,19 @@ jobs:
       - name: Download Professional Skills & Memory Systems
         run: |
           Write-Host ">>> Initializing Directories"
-          New-Item -ItemType Directory -Force -Path "resources/skills", "resources/memories"
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/skills", "src-tauri/resources/memories"
 
           Write-Host ">>> Downloading & Extracting OpenClaw Skills"
           Invoke-WebRequest -Uri "https://github.com/openclaw/skills/archive/refs/heads/main.zip" -OutFile "skills.zip"
 
           # Clean and extract using tar (built-in on Windows runner, handles dot-files correctly)
-          cmd /c "rmdir /s /q resources\skills_tmp 2>nul || exit 0"
-          tar -xf skills.zip -C resources
+          cmd /c "rmdir /s /q src-tauri\resources\skills_tmp 2>nul || exit 0"
+          tar -xf skills.zip -C src-tauri/resources
           Write-Host "Skills extracted to:"
-          Get-ChildItem -Path "resources" -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
+          Get-ChildItem -Path "src-tauri/resources" -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
 
           # Find the extracted root directory (skills-main from the zip)
-          $skillsRoot = Join-Path "resources" "skills-main"
+          $skillsRoot = Join-Path "src-tauri/resources" "skills-main"
           if (-not (Test-Path $skillsRoot)) {
               Write-Error "Failed to find skills-main directory"
               exit 1
@@ -102,7 +102,7 @@ jobs:
               $src = Join-Path $skillsRoot $skill
               if (Test-Path $src) {
                   Write-Host "Copying Skill: $skill"
-                  Copy-Item -Path $src -Destination "resources/skills" -Recurse -Force
+                  Copy-Item -Path $src -Destination "src-tauri/resources/skills" -Recurse -Force
               } else {
                   Write-Warning "Skill not found: $skill (expected at: $src)"
               }
@@ -112,43 +112,43 @@ jobs:
         run: |
           $losslessRoot = "lossless-claw-enhanced"
           $humanizerRoot = "humanizer"
-          
+
           # 1. Download Lossless Memory Enhanced
           Invoke-WebRequest -Uri "https://github.com/win4r/lossless-claw-enhanced/archive/refs/heads/main.zip" -OutFile "lossless.zip"
           Expand-Archive -Path "lossless.zip" -DestinationPath "lossless-tmp" -Force
-          Move-Item -Path "lossless-tmp/lossless-claw-enhanced-main" -Destination "resources/lossless-claw-enhanced" -Force
-          
+          Move-Item -Path "lossless-tmp/lossless-claw-enhanced-main" -Destination "src-tauri/resources/lossless-claw-enhanced" -Force
+
           # 2. Setup Memories folder for bundling
-          New-Item -ItemType Directory -Force -Path "resources/memories/lossless"
-          Copy-Item -Path "resources/lossless-claw-enhanced/*" -Destination "resources/memories/lossless" -Recurse -Force
-          
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/memories/lossless"
+          Copy-Item -Path "src-tauri/resources/lossless-claw-enhanced/*" -Destination "src-tauri/resources/memories/lossless" -Recurse -Force
+
           # 3. Setup Humanizer Skill
           Invoke-WebRequest -Uri "https://github.com/brandonwise/humanizer/archive/refs/heads/main.zip" -OutFile "humanizer.zip"
           Expand-Archive -Path "humanizer.zip" -DestinationPath "humanizer-tmp" -Force
-          New-Item -ItemType Directory -Force -Path "resources/skills/humanizer"
-          Move-Item -Path "humanizer-tmp/humanizer-main/*" -Destination "resources/skills/humanizer" -Force
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/skills/humanizer"
+          Move-Item -Path "humanizer-tmp/humanizer-main/*" -Destination "src-tauri/resources/skills/humanizer" -Force
 
           # 4. Add other community skills (example structure)
           # We can add more here later, but ensure they all have subdirectories
-          New-Item -ItemType File -Force -Path "resources/skills/.gitkeep"
+          New-Item -ItemType File -Force -Path "src-tauri/resources/skills/.gitkeep"
 
           # 5. Generate CLI Shim (openclaw.cmd)
           Write-Host ">>> Generating CLI Shim..."
-          New-Item -ItemType Directory -Force -Path "resources/bin"
-          $shimContent = "@echo off`nset INSTALL_DIR=%~dp0..`n`"%INSTALL_DIR%\node-runtime\node.exe`" `"%INSTALL_DIR%\openclaw\start.js`" %*"
-          Set-Content -Path "resources/bin/openclaw.cmd" -Value $shimContent
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/bin"
+          $shimContent = "@echo off`nsetlocal`nset `"RESOURCES_DIR=%~dp0..`"`nset `"NODE_EXE=%RESOURCES_DIR%\node-runtime\node.exe`"`nset `"OPENCLAW_JS=%RESOURCES_DIR%\openclaw\start.js`"`nif not exist `"%NODE_EXE%`" ( echo [Error] Node.js runtime not found & exit /b 1 )`nif not exist `"%OPENCLAW_JS%`" ( echo [Error] OpenClaw core script not found & exit /b 1 )`n`"%NODE_EXE%`" `"%OPENCLAW_JS%`" %*`nendlocal"
+          Set-Content -Path "src-tauri/resources/bin/openclaw.cmd" -Value $shimContent
 
       - name: Pre-build Resource Sanity Check
         run: |
           Write-Host ">>> Validating bundled resources..."
           $paths = @(
-            "resources/node-runtime/node.exe",
-            "resources/python-runtime/python.exe",
-            "resources/openclaw/start.js",
-            "resources/openclaw/node_modules.tar.gz",
-            "resources/bin/openclaw.cmd"
+            "src-tauri/resources/node-runtime/node.exe",
+            "src-tauri/resources/python-runtime/python.exe",
+            "src-tauri/resources/openclaw/start.js",
+            "src-tauri/resources/openclaw/node_modules.tar.gz",
+            "src-tauri/resources/bin/openclaw.cmd"
           )
-          
+
           foreach ($p in $paths) {
             if (Test-Path $p) {
               Write-Host "[OK] $p exists."
@@ -157,16 +157,16 @@ jobs:
               exit 1
             }
           }
-          
+
           Write-Host ">>> Skills bundled:"
-          Get-ChildItem -Path "resources/skills"
+          Get-ChildItem -Path "src-tauri/resources/skills"
 
       - name: Cleanup and Finalizing
         run: |
           $dirsToCleanup = @(
-              "resources/skills-main",
-              "resources/memories/lossless-claw-enhanced-main",
-              "resources/humanizer-main"
+              "src-tauri/resources/skills-main",
+              "src-tauri/resources/memories/lossless-claw-enhanced-main",
+              "src-tauri/resources/humanizer-main"
           )
           $filesToCleanup = @("skills.zip", "lossless.zip", "humanizer.zip")
 
@@ -215,10 +215,10 @@ jobs:
         if: failure()
         run: |
           Write-Host "=== Resources file count ==="
-          $count = (Get-ChildItem -Path "resources" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
+          $count = (Get-ChildItem -Path "src-tauri/resources" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
           Write-Host "Total files in resources: $count"
           Write-Host "=== Top-level directories ==="
-          Get-ChildItem -Path "resources" -Directory | ForEach-Object {
+          Get-ChildItem -Path "src-tauri/resources" -Directory | ForEach-Object {
               $subCount = (Get-ChildItem -Path $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
               Write-Host "  $($_.Name): $subCount files"
           }
@@ -239,17 +239,19 @@ jobs:
 
       - name: Initialize Resources Structure
         run: |
-          mkdir -p resources/node-runtime
-          mkdir -p resources/python-runtime
-          mkdir -p resources/openclaw
-          mkdir -p resources/skills
-          mkdir -p resources/memories
-          touch resources/node-runtime/.gitkeep
-          touch resources/python-runtime/.gitkeep
-          touch resources/skills/.gitkeep
-          touch resources/memories/.gitkeep
-          touch resources/openclaw/start.js
-          echo "Placeholder for CI" > resources/openclaw/placeholder.tar.gz
+          mkdir -p src-tauri/resources/node-runtime
+          mkdir -p src-tauri/resources/python-runtime
+          mkdir -p src-tauri/resources/openclaw
+          mkdir -p src-tauri/resources/skills
+          mkdir -p src-tauri/resources/memories
+          mkdir -p src-tauri/resources/bin
+          touch src-tauri/resources/node-runtime/.gitkeep
+          touch src-tauri/resources/python-runtime/.gitkeep
+          touch src-tauri/resources/skills/.gitkeep
+          touch src-tauri/resources/memories/.gitkeep
+          touch src-tauri/resources/bin/.gitkeep
+          touch src-tauri/resources/openclaw/start.js
+          echo "Placeholder for CI" > src-tauri/resources/openclaw/placeholder.tar.gz
 
       - name: Install Node.js 22
         uses: actions/setup-node@v4

@@ -1,9 +1,9 @@
 @echo off
 setlocal
-:: 获取当前脚本所在的安装根目录
-set "INSTALL_DIR=%~dp0.."
-set "NODE_EXE=%INSTALL_DIR%\node-runtime\node.exe"
-set "OPENCLAW_JS=%INSTALL_DIR%\openclaw\start.js"
+:: 获取当前脚本所在的 resources 目录
+set "RESOURCES_DIR=%~dp0.."
+set "NODE_EXE=%RESOURCES_DIR%\node-runtime\node.exe"
+set "OPENCLAW_JS=%RESOURCES_DIR%\openclaw\start.js"
 
 if not exist "%NODE_EXE%" (
     echo [Error] Node.js runtime not found at: %NODE_EXE%

@@ -35,12 +35,12 @@
     "active": true,
     "targets": ["nsis"],
     "resources": [
-      "../resources/node-runtime/**/*",
-      "../resources/python-runtime/**/*",
-      "../resources/openclaw/*.tar.gz",
-      "../resources/openclaw/start.js",
-      "../resources/skills/**/*",
-      "../resources/memories/**/*",
+      "resources/node-runtime/**/*",
+      "resources/python-runtime/**/*",
+      "resources/openclaw/*.tar.gz",
+      "resources/openclaw/start.js",
+      "resources/skills/**/*",
+      "resources/memories/**/*",
       "resources/bin/*"
     ],
     "icon": [

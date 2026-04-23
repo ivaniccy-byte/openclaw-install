@@ -43,12 +43,13 @@ impl OpenClawProcess {
 
     /// 启动OpenClaw进程
     pub fn start(&mut self) -> Result<(), WrapperError> {
-        let openclaw_dir = std::path::Path::new(&self.install_path);
-
         // 1. 查找Node.js可执行文件
         let node_exe = self.find_node_exe()?;
 
         // 2. 启动OpenClaw核心（Node.js）
+        // start.js 位于 resources/openclaw/ 目录下
+        let openclaw_dir = std::path::Path::new(&self.install_path).join("resources").join("openclaw");
+
         let mut node_cmd = Command::new(node_exe);
         node_cmd.arg("start.js")
            .current_dir(openclaw_dir)
@@ -121,9 +122,9 @@ impl OpenClawProcess {
     /// 查找Node.js可执行文件
     fn find_node_exe(&self) -> Result<String, WrapperError> {
         let node_sub_path = if cfg!(target_os = "windows") {
-            "node-runtime/node.exe"
+            "resources/node-runtime/node.exe"
         } else {
-            "node-runtime/bin/node"
+            "resources/node-runtime/bin/node"
         };
 
         // 1. 优先检查当前安装路径下的 node
@@ -167,28 +168,28 @@ pub fn perform_install(
 
     let resource_dir = app_handle.path().resource_dir()
         .map_err(|e| WrapperError::ResourceError(e.to_string()))?;
-    
-    // tauri.conf.json 配置 "../resources/**/*" 会将 resources/ 下的内容
-    // 直接平铺到 resource_dir() 根目录下，所以不需要再 join("resources")
-    let src_resources = &resource_dir;
+
+    // tauri.conf.json 配置 "resources/**/*" 会将 resources/ 下的内容
+    // 放到 resource_dir()/resources/ 目录下
+    let src_resources = resource_dir.join("resources");
 
     log::info!("资源目录: {:?}", src_resources);
     log::info!("目标安装目录: {:?}", target_dir);
 
     // 1. 复制必备组件
-    copy_dir_recursive(&src_resources.join("openclaw"), &target_dir.join("openclaw"))?;
-    copy_dir_recursive(&src_resources.join("node-runtime"), &target_dir.join("node-runtime"))?;
-    copy_dir_recursive(&src_resources.join("python-runtime"), &target_dir.join("python-runtime"))?;
-    copy_dir_recursive(&src_resources.join("bin"), &target_dir.join("bin"))?;
-    
+    copy_dir_recursive(&src_resources.join("openclaw"), &target_dir.join("resources").join("openclaw"))?;
+    copy_dir_recursive(&src_resources.join("node-runtime"), &target_dir.join("resources").join("node-runtime"))?;
+    copy_dir_recursive(&src_resources.join("python-runtime"), &target_dir.join("resources").join("python-runtime"))?;
+    copy_dir_recursive(&src_resources.join("bin"), &target_dir.join("resources").join("bin"))?;
+
     // 2. 复制可选组件
     if options.selected_memory == "lossless-enhanced" {
-        copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("lossless-claw-enhanced"))?;
-        copy_dir_recursive(&src_resources.join("memories"), &target_dir.join("workspace").join("memories"))?;
+        copy_dir_recursive(&src_resources.join("lossless-claw-enhanced"), &target_dir.join("resources").join("lossless-claw-enhanced"))?;
+        copy_dir_recursive(&src_resources.join("memories"), &target_dir.join("resources").join("workspace").join("memories"))?;
     }
 
     if !options.selected_skills.is_empty() {
-        let dst_skills = target_dir.join("workspace").join("skills");
+        let dst_skills = target_dir.join("resources").join("workspace").join("skills");
         copy_dir_recursive(&src_resources.join("skills"), &dst_skills)?;
     }
 
