@@ -11,22 +11,20 @@
     WriteRegStr HKCU "Environment" "OPENCLAW_HOME" "$INSTDIR"
     WriteRegStr HKCU "Environment" "OPENCLAW_CONFIG_PATH" "$INSTDIR\openclaw.json"
 
-    # 2. Unpack node_modules from tar.gz (with file existence check)
+    # 2. Unpack node_modules from tar.gz
     DetailPrint "Checking for node_modules.tar.gz..."
     IfFileExists "$INSTDIR\resources\openclaw\node_modules.tar.gz" do_unpack skip_unpack
 
     do_unpack:
         DetailPrint "Unpacking node_modules (this may take a minute)..."
-        # Use nsExec for better control (doesn't wait for cmd window)
         nsExec::ExecToStack 'cmd /c cd /d "$INSTDIR\resources\openclaw" && tar -xzf node_modules.tar.gz'
-        Pop $0  ; exit code
-        Pop $1  ; output
+        Pop $0
+        Pop $1
         IntCmp $0 0 unpack_ok
             DetailPrint "Warning: tar exited with code $0"
             Goto unpack_done
         unpack_ok:
             DetailPrint "node_modules unpacked successfully."
-            # Delete the tar.gz after successful extraction
             Delete "$INSTDIR\resources\openclaw\node_modules.tar.gz"
         Goto unpack_done
 
@@ -35,11 +33,10 @@
 
     unpack_done:
 
-    # 3. Add to PATH (only if not already present)
+    # 3. Add to PATH
     DetailPrint "Updating PATH..."
     ReadRegStr $0 HKCU "Environment" "PATH"
 
-    # Check and add node-runtime
     Push "$INSTDIR\resources\node-runtime"
     Push $0
     Call StrStr
@@ -48,7 +45,6 @@
         StrCpy $0 "$0;$INSTDIR\resources\node-runtime"
     skip_node:
 
-    # Check and add bin
     Push "$INSTDIR\resources\bin"
     Push $0
     Call StrStr
@@ -59,53 +55,119 @@
 
     WriteRegStr HKCU "Environment" "PATH" $0
 
-    # 4. Broadcast environment change (with short timeout)
-    # Using 1 second timeout to avoid hanging on unresponsive windows
     SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
 
     DetailPrint "Installation complete!"
 !macroend
 
-# Uninstall section
-Section "-UninstallExtra"
-    # Remove environment variables
+!macro NSIS_HOOK_PREUNINSTALL
+    DetailPrint "=========================================="
+    DetailPrint "OpenClaw 卸载程序"
+    DetailPrint "=========================================="
+!macroend
+
+!macro NSIS_HOOK_POSTUNINSTALL
+    # 询问用户是否删除各组件
+    DetailPrint "正在询问卸载选项..."
+
+    # 停止运行中的进程
+    DetailPrint "停止运行中的进程..."
+    nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
+    Pop $0
+    Pop $1
+
+    # 清理环境变量
+    DetailPrint "清理环境变量..."
     DeleteRegValue HKCU "Environment" "OPENCLAW_HOME"
     DeleteRegValue HKCU "Environment" "OPENCLAW_CONFIG_PATH"
 
-    # Remove from PATH
+    # 清理 PATH
     ReadRegStr $0 HKCU "Environment" "PATH"
 
     Push "$INSTDIR\resources\node-runtime"
     Push ""
     Push $0
-    Call StrReplace
+    Call un.StrReplace
     Pop $0
 
     Push "$INSTDIR\resources\bin"
     Push ""
     Push $0
-    Call StrReplace
+    Call un.StrReplace
     Pop $0
 
-    # Clean up double semicolons
+    Push "$INSTDIR\resources\python-runtime"
+    Push ""
+    Push $0
+    Call un.StrReplace
+    Pop $0
+
     Push ";;"
     Push ";"
     Push $0
-    Call StrReplace
+    Call un.StrReplace
     Pop $0
 
     WriteRegStr HKCU "Environment" "PATH" $0
 
-    # Remove installation directory
-    RMDir /r "$INSTDIR"
+    # 移除开机自启
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "OpenClawWorkplace"
 
-    # Remove AppData cache
+    # 询问删除 Node.js 运行时
+    MessageBox MB_YESNO "是否删除 Node.js v22 运行时？$\r$\n$\r$\n选择「否」可保留供其他程序使用。" IDYES del_node IDNO skip_node
+    del_node:
+        DetailPrint "删除 Node.js 运行时..."
+        RMDir /r "$INSTDIR\resources\node-runtime"
+        Goto node_done
+    skip_node:
+        DetailPrint "保留 Node.js 运行时"
+    node_done:
+
+    # 询问删除 Python 运行时
+    MessageBox MB_YESNO "是否删除 Python 3.10 运行时？$\r$\n$\r$\n选择「否」可保留供其他程序使用。" IDYES del_python IDNO skip_python
+    del_python:
+        DetailPrint "删除 Python 运行时..."
+        RMDir /r "$INSTDIR\resources\python-runtime"
+        Goto python_done
+    skip_python:
+        DetailPrint "保留 Python 运行时"
+    python_done:
+
+    # 询问删除 OpenClaw 核心
+    MessageBox MB_YESNO "是否删除 OpenClaw 核心？$\r$\n$\r$\n选择「否」可保留配置和数据。" IDYES del_core IDNO skip_core
+    del_core:
+        DetailPrint "删除 OpenClaw 核心..."
+        RMDir /r "$INSTDIR\resources\openclaw"
+        RMDir /r "$INSTDIR\resources\skills"
+        RMDir /r "$INSTDIR\resources\memories"
+        Delete "$INSTDIR\openclaw.json"
+        Goto core_done
+    skip_core:
+        DetailPrint "保留 OpenClaw 核心和配置"
+    core_done:
+
+    # 删除 CLI 工具（总是删除）
+    RMDir /r "$INSTDIR\resources\bin"
+
+    # 清理缓存
     RMDir /r "$LOCALAPPDATA\com.openclaw.workplace"
 
-    SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
-SectionEnd
+    # 尝试清理空目录
+    RMDir "$INSTDIR\resources"
+    RMDir "$INSTDIR"
 
-# Helper function: StrStr (check if string contains substring)
+    # 广播环境变量变更
+    SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
+
+    DetailPrint "=========================================="
+    DetailPrint "OpenClaw 卸载完成"
+    DetailPrint "=========================================="
+!macroend
+
+# ============================================================================
+# 辅助函数
+# ============================================================================
+
 Function StrStr
   Exch $R1
   Exch
@@ -136,8 +198,7 @@ Function StrStr
     Exch $R1
 FunctionEnd
 
-# Helper function: StrReplace
-Function StrReplace
+Function un.StrReplace
   Exch $R0
   Exch
   Exch $R1
