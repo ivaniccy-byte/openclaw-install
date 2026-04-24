@@ -97,56 +97,19 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
-    DetailPrint "=========================================="
-    DetailPrint "OpenClaw 卸载程序"
-    DetailPrint "=========================================="
+    DetailPrint "OpenClaw 卸载程序启动..."
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
-    # 询问用户是否删除各组件
-    DetailPrint "正在询问卸载选项..."
-
     # 停止运行中的进程
     DetailPrint "停止运行中的进程..."
     nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
-    Pop $0
-    Pop $1
+    nsExec::ExecToStack 'taskkill /f /im "node.exe" 2>nul'
 
-    # 清理环境变量
+    # 清理环境变量（简单删除，不修改 PATH）
     DetailPrint "清理环境变量..."
     DeleteRegValue HKCU "Environment" "OPENCLAW_HOME"
     DeleteRegValue HKCU "Environment" "OPENCLAW_CONFIG_PATH"
-
-    # 清理 PATH
-    ReadRegStr $0 HKCU "Environment" "PATH"
-
-    Push "$INSTDIR\resources\node-runtime"
-    Push ""
-    Push $0
-    Call un.StrReplace
-    Pop $0
-
-    Push "$INSTDIR\resources\bin"
-    Push ""
-    Push $0
-    Call un.StrReplace
-    Pop $0
-
-    Push "$INSTDIR\resources\python-runtime"
-    Push ""
-    Push $0
-    Call un.StrReplace
-    Pop $0
-
-    Push ";;"
-    Push ";"
-    Push $0
-    Call un.StrReplace
-    Pop $0
-
-    WriteRegStr HKCU "Environment" "PATH" $0
-
-    # 移除开机自启
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "OpenClawWorkplace"
 
     # 询问删除 Node.js 运行时
@@ -169,7 +132,7 @@
         DetailPrint "保留 Python 运行时"
     python_done:
 
-    # 询问删除 OpenClaw 核心（包含 Skills、Memories、配置文件）
+    # 询问删除 OpenClaw 核心
     MessageBox MB_YESNO "是否删除 OpenClaw 核心？$\r$\n$\r$\n包含：Skills、Memories、配置文件$\r$\n$\r$\n选择「否」可保留配置和数据。" IDYES del_core IDNO skip_core
     del_core:
         DetailPrint "删除 OpenClaw 核心..."
@@ -182,22 +145,17 @@
         DetailPrint "保留 OpenClaw 核心和配置"
     core_done:
 
-    # 删除 CLI 工具（总是删除）
+    # 删除 CLI 工具
     RMDir /r "$INSTDIR\resources\bin"
 
     # 清理缓存
     RMDir /r "$LOCALAPPDATA\com.openclaw.workplace"
 
-    # 尝试清理空目录
+    # 清理空目录
     RMDir "$INSTDIR\resources"
     RMDir "$INSTDIR"
 
-    # 广播环境变量变更
-    SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
-
-    DetailPrint "=========================================="
-    DetailPrint "OpenClaw 卸载完成"
-    DetailPrint "=========================================="
+    DetailPrint "卸载完成！"
 !macroend
 
 # ============================================================================
@@ -232,40 +190,4 @@ Function StrStr
     Pop $R3
     Pop $R2
     Exch $R1
-FunctionEnd
-
-Function un.StrReplace
-  Exch $R0
-  Exch
-  Exch $R1
-  Exch 2
-  Exch $R2
-  Push $R3
-  Push $R4
-  Push $R5
-  Push $R6
-  StrLen $R3 $R1
-  StrLen $R4 $R2
-  StrCpy $R5 0
-  loop:
-    StrCpy $R6 $R0 $R3 $R5
-    StrCmp $R6 $R1 found
-    StrCmp $R6 "" done
-    IntOp $R5 $R5 + 1
-    Goto loop
-  found:
-    StrCpy $R6 $R0 $R5
-    StrCpy $R0 $R0 "" $R5
-    StrCpy $R0 $R0 "" $R3
-    StrCpy $R0 "$R6$R2$R0"
-    IntOp $R5 $R5 + $R4
-    Goto loop
-  done:
-    Pop $R6
-    Pop $R5
-    Pop $R4
-    Pop $R3
-    Pop $R2
-    Pop $R1
-    Exch $R0
 FunctionEnd
