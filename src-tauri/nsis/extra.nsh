@@ -97,20 +97,52 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
-    DetailPrint "OpenClaw 卸载程序启动..."
+    DetailPrint "=========================================="
+    DetailPrint "OpenClaw 卸载程序"
+    DetailPrint "=========================================="
+
+    # 第一步：终止所有相关进程
+    DetailPrint "正在终止相关进程..."
+
+    # 终止 OpenClaw 主程序
+    nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
+    Pop $0
+    Pop $1
+
+    # 终止 Node.js 进程
+    nsExec::ExecToStack 'taskkill /f /im "node.exe" 2>nul'
+    Pop $0
+    Pop $1
+
+    # 终止 Python 进程
+    nsExec::ExecToStack 'taskkill /f /im "python.exe" 2>nul'
+    Pop $0
+    Pop $1
+
+    # 等待进程完全退出（关键步骤）
+    DetailPrint "等待进程退出..."
+    Sleep 3000
+
+    # 再次确认进程已终止
+    nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
+    nsExec::ExecToStack 'taskkill /f /im "node.exe" 2>nul'
+    Sleep 1000
+
+    DetailPrint "进程已终止，准备卸载..."
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
-    # 停止运行中的进程
-    DetailPrint "停止运行中的进程..."
-    nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
-    nsExec::ExecToStack 'taskkill /f /im "node.exe" 2>nul'
-
-    # 清理环境变量（简单删除，不修改 PATH）
+    # 清理环境变量
     DetailPrint "清理环境变量..."
     DeleteRegValue HKCU "Environment" "OPENCLAW_HOME"
     DeleteRegValue HKCU "Environment" "OPENCLAW_CONFIG_PATH"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "OpenClawWorkplace"
+
+    # 使用 PowerShell 清理 PATH（更可靠）
+    DetailPrint "清理 PATH 环境变量..."
+    nsExec::ExecToStack 'powershell -NoProfile -Command "$p = [Environment]::GetEnvironmentVariable(''PATH'', ''User''); $p = ($p.Split('';'') | Where-Object { $_ -notlike ''*\.openclaw*'' }) -join '';''; [Environment]::SetEnvironmentVariable(''PATH'', $p, ''User'')"'
+    Pop $0
+    Pop $1
 
     # 询问删除 Node.js 运行时
     MessageBox MB_YESNO "是否删除 Node.js v22 运行时？$\r$\n$\r$\n选择「否」可保留供其他程序使用。" IDYES del_node IDNO skip_node
@@ -155,7 +187,9 @@
     RMDir "$INSTDIR\resources"
     RMDir "$INSTDIR"
 
+    DetailPrint "=========================================="
     DetailPrint "卸载完成！"
+    DetailPrint "=========================================="
 !macroend
 
 # ============================================================================
