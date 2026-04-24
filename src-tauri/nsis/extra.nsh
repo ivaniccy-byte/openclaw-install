@@ -1,8 +1,44 @@
 !macro NSIS_HOOK_PREINSTALL
     # Hard-enforce installation directory to %USERPROFILE%\.openclaw
     StrCpy $INSTDIR "$PROFILE\.openclaw"
+    DetailPrint "Installation directory: $INSTDIR"
+
+    # Stop any running OpenClaw processes
+    DetailPrint "Stopping OpenClaw processes..."
+    nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
+    nsExec::ExecToStack 'taskkill /f /im "node.exe" 2>nul'
+
+    # Wait for processes to terminate
+    Sleep 2000
+
+    # Check if old installation exists and handle locked files
+    IfFileExists "$INSTDIR\resources\*" 0 proceed_install
+
+    # Old installation exists - try to remove locked files
+    DetailPrint "Removing previous installation..."
+    ClearErrors
+    RMDir /r "$INSTDIR"
+    IfErrors 0 proceed_install
+
+    # Failed to remove - files are locked
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+        "无法删除旧安装目录中的文件。$\r$\n$\r$\n可能原因：$\r$\n- OpenClaw 或 Node.js 正在运行$\r$\n- 其他程序正在使用相关文件$\r$\n$\r$\n请关闭所有相关程序后重试。" \
+        IDRETRY retry_remove IDCANCEL abort_install
+
+    retry_remove:
+        nsExec::ExecToStack 'taskkill /f /im "openclaw-workplace.exe" 2>nul'
+        nsExec::ExecToStack 'taskkill /f /im "node.exe" 2>nul'
+        Sleep 2000
+        RMDir /r "$INSTDIR"
+        IfErrors 0 proceed_install
+        MessageBox MB_OK|MB_ICONSTOP "仍然无法删除文件。安装将退出。"
+        Abort "安装失败：文件被占用"
+
+    abort_install:
+        Abort "用户取消安装"
+
+    proceed_install:
     SetOutPath "$INSTDIR"
-    DetailPrint "[Hardened] Target Installation Directory redirected to: $INSTDIR"
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
